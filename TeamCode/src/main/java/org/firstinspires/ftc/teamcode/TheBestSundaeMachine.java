@@ -42,10 +42,10 @@ public class TheBestSundaeMachine extends LinearOpMode implements SignalReader {
     // Make sure these are all the same length as NUM_OF_TOPPINGS
     private final int[] BUTTON_TO_TOPPING_NUM = {4, 0, 1, 5, 6, 3, 2};
     private final int[] OSCILLATION_AMP = {200, 200, 200, 200, 200, 200, 300}; // in ticks
-    private final int[] OSCILLATION_FREQ = {4, 4, 2, 2, 2, 2, 2};
+    private final int[] OSCILLATION_FREQ = {4, 4, 2, 2, 2, 1, 2};
     private final int[] BOWL_POSITIONS = {2177, 3800, 5149, 6767, 8413, 10030, 12087};
     private final int[] DISPENSER_SECTORS = {4, 4, 8, 8, 8, 8, 0}; // -1 is servo, invalid
-    private final int[] SECTORS_PER_DISPENSE = {3, 8, 2, 5, 2, 1, 0}; // Same
+    private final int[] SECTORS_PER_DISPENSE = {2, 12, 2, 5, 3, 1, 0}; // Same
     private final int CREAM_DISPENSE_DURATION = 650;
     private final float CREAM_DISPENSE_ANGLE = 1.5f;
     private final int[] dispenserTally = new int[NUM_OF_TOPPINGS];
@@ -54,7 +54,7 @@ public class TheBestSundaeMachine extends LinearOpMode implements SignalReader {
     private DcMotorEx conveyorMotor;
     private Servo creamServo;
     private final String[] allMotorNames = {"topping0Motor", "topping1Motor", "topping2Motor",
-            "topping3Motor", "topping4Motor", "topping5Motor", "T6PLACEHOLDER", "conveyorMotor"};
+            "topping3Motor", "topping4Motor", "topping5Motor", "creamServo", "conveyorMotor"};
     // topping6 is a servo
     private final int SERVO_INDEX = 6;
     private final DcMotorEx[] allMotors = new DcMotorEx[allMotorNames.length];
@@ -118,7 +118,6 @@ public class TheBestSundaeMachine extends LinearOpMode implements SignalReader {
         for (int i = 0; i < allMotors.length; i++) {
             if (i != SERVO_INDEX) {
                 allMotors[i] = hardwareMap.get(DcMotorEx.class, allMotorNames[i]);
-                allMotors[i].setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
                 allMotors[i].setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
                 allMotors[i].setTargetPosition(0);
                 allMotors[i].setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
@@ -133,6 +132,7 @@ public class TheBestSundaeMachine extends LinearOpMode implements SignalReader {
         conveyorMotor.setPower(1);
         conveyorMotor.setCurrentAlert(CONVEYOR_CURRENT_LIMIT, CurrentUnit.MILLIAMPS);
         conveyorMotor.setPositionPIDFCoefficients(CONVEYOR_PROPORTIONAL);
+        allMotors[1].setPower(1); // Fuck this
 
         for (int i = 0; i < operatorButtons.length; i++) {
             operatorButtons[i] = hardwareMap.get(DigitalChannel.class, operatorButtonNames[i]);
@@ -314,6 +314,7 @@ public class TheBestSundaeMachine extends LinearOpMode implements SignalReader {
         for (int i = 0; i < NUM_OF_FLAVORS; i++) {
             if (((selection >> i) & 0x01) == 1) { // If flavor selected
                 switch (i) { // Which one
+                    //This shouldn't use a string -Finn
                     case 0: newFlavor = "Strawberry"; break;
                     case 1: newFlavor = "Chocolate"; break;
                     case 2: newFlavor = "Vanilla"; break;
@@ -348,7 +349,7 @@ public class TheBestSundaeMachine extends LinearOpMode implements SignalReader {
     }
 
     private void dispenseTopping(int topping) {
-        if (topping != SERVO_INDEX) { // If not whipped cream
+        if (topping != SERVO_INDEX) { // Still "None"/ If not whipped cream
             dispenserTally[topping] += SECTORS_PER_DISPENSE[topping];
             // Assuming 30 rpm motor, 5281.1 ticks per revolution
             // If using different motor, please change this to the listed ticks per revolution
