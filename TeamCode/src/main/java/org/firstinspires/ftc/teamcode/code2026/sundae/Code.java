@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.code2026.sundae;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -8,8 +8,8 @@ import java.util.Queue;
 
 
 @TeleOp
-public class IceCream2026 extends LinearOpMode {
-    public Queue<IceCreamFlavors> flavorQueue;
+public class Code extends LinearOpMode {
+    public Queue<Flavor> flavorQueue;
     public Queue<IceCreamToppings> toppingQueue;
     public Queue<Integer> toppingQueueAmounts;
     public Queue<IceCreamSauces> sauceQueue;
@@ -19,7 +19,7 @@ public class IceCream2026 extends LinearOpMode {
 
     }
     public void MoveForward(){
-        IceCreamFlavors flavor = flavorQueue.remove();
+        Flavor flavor = flavorQueue.remove();
 
         int amountToMoveInToppings = toppingQueueAmounts.remove();
 
@@ -30,7 +30,7 @@ public class IceCream2026 extends LinearOpMode {
     public void DispenseTopping(IceCreamToppings topping){
 
     }
-    public void QueueFlavor(IceCreamFlavors flavor, List<IceCreamToppings> toppings, List<IceCreamSauces> sauces){
+    public void QueueFlavor(Flavor flavor, List<IceCreamToppings> toppings, List<IceCreamSauces> sauces){
         flavorQueue.add(flavor);
         toppingQueue.addAll(toppings);
         toppingQueueAmounts.add(toppings.size());
