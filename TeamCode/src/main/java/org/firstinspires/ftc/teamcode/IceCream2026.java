@@ -1,41 +1,66 @@
 package org.firstinspires.ftc.teamcode;
 
+import static java.lang.System.in;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.dispenser.DispenserInterface;
+import org.firstinspires.ftc.teamcode.dispenser.FrootLoops;
+
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.AbstractList;
 
 
 @TeleOp
 public class IceCream2026 extends LinearOpMode {
     public Queue<IceCreamFlavors> flavorQueue;
-    public Queue<IceCreamToppings> toppingQueue;
+    public Queue<DispenserInterface> toppingQueue;
     public Queue<Integer> toppingQueueAmounts;
-    public Queue<IceCreamSauces> sauceQueue;
-    public Queue<Integer> sauceQueueAmounts;
+
+    public Queue<Double> prices;
+
     @Override
     public void runOpMode(){
+        waitForStart();
+        flavorQueue = new LinkedList<>();
+        toppingQueue = new LinkedList<>();
+        toppingQueueAmounts = new LinkedList<>();
+        List<DispenserInterface> toppings = List.of(
+                new FrootLoops(hardwareMap)
+        );
+        QueueFlavor(IceCreamFlavors.Chocolate, toppings);
+        MoveForward();
+        while(opModeIsActive()){
 
+        }
     }
+
     public void MoveForward(){
         IceCreamFlavors flavor = flavorQueue.remove();
 
         int amountToMoveInToppings = toppingQueueAmounts.remove();
 
         for(int i = 0; i < amountToMoveInToppings; i++){
-
+            DispenseTopping();
         }
     }
-    public void DispenseTopping(IceCreamToppings topping){
-
+    public void DispenseTopping(){
+        DispenserInterface topping = toppingQueue.remove();
+        topping.Dispense();
+        //telemetry.addData("Motor ",topping.GetMotor().getCurrentPosition());
+        //telemetry.addData("MotorTgt ",topping.GetMotor().getTargetPosition());
     }
-    public void QueueFlavor(IceCreamFlavors flavor, List<IceCreamToppings> toppings, List<IceCreamSauces> sauces){
+    public void QueueFlavor(IceCreamFlavors flavor, List<DispenserInterface> toppings){
         flavorQueue.add(flavor);
         toppingQueue.addAll(toppings);
+        //telemetry.addData("Motor ",toppings.get(0).GetMotor().getCurrentPosition());
+        //telemetry.addData("MotorTgt ",toppings.get(0).GetMotor().getTargetPosition());
         toppingQueueAmounts.add(toppings.size());
-        sauceQueue.addAll(sauces);
-        sauceQueueAmounts.add(sauces.size());
+        telemetry.update();
     }
 
 }

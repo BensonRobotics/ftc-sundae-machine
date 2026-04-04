@@ -1,8 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 public enum IceCreamSauces{
-    Chocolate(2, 1),
-    Caramel(2, 2)
+
 
     ;
 
