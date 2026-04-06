@@ -1,18 +1,14 @@
 package org.firstinspires.ftc.teamcode.dispenser;
 
 
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
-
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import java.lang.reflect.Constructor;
-
-public class FrootLoops extends DispenserInterface {
+public class BrownieBits extends DispenserInterface {
     //Initialize Values
-    public FrootLoops(HardwareMap hardwareMap){
+    public BrownieBits(HardwareMap hardwareMap){
         DispenserInterface.price = 2.00f;
-        SetMotor(hardwareMap.get(DcMotorEx.class, "topping2Motor"));
+        SetMotor(hardwareMap.get(DcMotorEx.class, "topping4Motor"));
 
     }
     @Override

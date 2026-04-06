@@ -50,15 +50,15 @@ public class IceCream2026 extends LinearOpMode {
     }
     public void DispenseTopping(){
         DispenserInterface topping = toppingQueue.remove();
-        topping.Dispense();
+        topping.Dispense(1);
         //telemetry.addData("Motor ",topping.GetMotor().getCurrentPosition());
         //telemetry.addData("MotorTgt ",topping.GetMotor().getTargetPosition());
     }
     public void QueueFlavor(Flavor flavor, List<DispenserInterface> toppings){
         flavorQueue.add(flavor);
         toppingQueue.addAll(toppings);
-        //telemetry.addData("Motor ",toppings.get(0).GetMotor().getCurrentPosition());
-        //telemetry.addData("MotorTgt ",toppings.get(0).GetMotor().getTargetPosition());
+        telemetry.addData("Motor ",toppings.get(0).GetMotor().getCurrentPosition());
+        telemetry.addData("MotorTgt ",toppings.get(0).GetMotor().getTargetPosition());
         toppingQueueAmounts.add(toppings.size());
         telemetry.update();
     }
