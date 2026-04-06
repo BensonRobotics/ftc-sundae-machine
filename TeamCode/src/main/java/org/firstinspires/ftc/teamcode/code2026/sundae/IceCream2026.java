@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.code2026.sundae;
 
 import static java.lang.System.in;
 
@@ -17,7 +17,7 @@ import java.util.AbstractList;
 
 @TeleOp
 public class IceCream2026 extends LinearOpMode {
-    public Queue<IceCreamFlavors> flavorQueue;
+    public Queue<Flavor> flavorQueue;
     public Queue<DispenserInterface> toppingQueue;
     public Queue<Integer> toppingQueueAmounts;
 
@@ -32,7 +32,7 @@ public class IceCream2026 extends LinearOpMode {
         List<DispenserInterface> toppings = List.of(
                 new FrootLoops(hardwareMap)
         );
-        QueueFlavor(IceCreamFlavors.Chocolate, toppings);
+        QueueFlavor(Flavor.Chocolate, toppings);
         MoveForward();
         while(opModeIsActive()){
 
@@ -40,7 +40,7 @@ public class IceCream2026 extends LinearOpMode {
     }
 
     public void MoveForward(){
-        IceCreamFlavors flavor = flavorQueue.remove();
+        Flavor flavor = flavorQueue.remove();
 
         int amountToMoveInToppings = toppingQueueAmounts.remove();
 
@@ -54,7 +54,7 @@ public class IceCream2026 extends LinearOpMode {
         //telemetry.addData("Motor ",topping.GetMotor().getCurrentPosition());
         //telemetry.addData("MotorTgt ",topping.GetMotor().getTargetPosition());
     }
-    public void QueueFlavor(IceCreamFlavors flavor, List<DispenserInterface> toppings){
+    public void QueueFlavor(Flavor flavor, List<DispenserInterface> toppings){
         flavorQueue.add(flavor);
         toppingQueue.addAll(toppings);
         //telemetry.addData("Motor ",toppings.get(0).GetMotor().getCurrentPosition());

@@ -15,8 +15,9 @@ public abstract class DispenserInterface {
         double position = motor.getCurrentPosition();
 
         motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motor.setTargetPosition((int) (spinAmount + Math.ceil(position)));
+        motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
         motor.setPower(100);
     }
     public void Calibrate(){
