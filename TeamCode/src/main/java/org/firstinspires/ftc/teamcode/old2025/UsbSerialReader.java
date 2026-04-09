@@ -34,6 +34,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
+// STUPID VIBE CODED SHIT. NO NO GOOD. LOOK AWAY.
 // This class encapsulates the USB serial functionality.
 public class UsbSerialReader {
     // Define your confirm header and the expected packet length.
