@@ -8,7 +8,8 @@ public class MM extends DispenserInterface {
     //Initialize Values
     public MM(HardwareMap hardwareMap){
         DispenserInterface.price = 2.00f;
-        SetMotor(hardwareMap.get(DcMotorEx.class, "topping3Motor"));
+        SauceInterface.motorIdx = 4;
+        SetMotor(hardwareMap.get(DcMotorEx.class, "MM"));
 
     }
     @Override
