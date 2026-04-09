@@ -35,6 +35,7 @@ public class SerialReceiver {
         port = driver.getPorts().get(0); // Most devices have just one port (port 0)
         try {
             port.open(connection);
+            // Ard weener
             port.setParameters(9600, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
         } catch (IOException e) {
             System.out.println(e.getMessage());
