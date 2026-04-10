@@ -9,18 +9,25 @@ import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 import java.io.IOException;
 import java.util.List;
 
 public class SerialReceiver {
-    final int serialTimeout = 20; // Milliseconds
-    UsbSerialPort port;
-    SerialReceiver(OpMode opMode) {
+    private final int serialTimeout = 50; // Milliseconds
+    private UsbSerialPort port;
+    private boolean useTelemetry;
+    private Telemetry telemetry;
+    SerialReceiver(OpMode opMode, boolean useTelemetry) {
+        this.useTelemetry = useTelemetry;
+        telemetry = opMode.telemetry;
         Context context = opMode.hardwareMap.appContext;
         // Find all available drivers from attached devices.
         UsbManager manager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
         List<UsbSerialDriver> availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(manager);
         if (availableDrivers.isEmpty()) {
+            log("No drivers found!");
             return;
         }
 
@@ -29,6 +36,7 @@ public class SerialReceiver {
         UsbDeviceConnection connection = manager.openDevice(driver.getDevice());
         if (connection == null) {
             // add UsbManager.requestPermission(driver.getDevice(), ..) handling here
+            log("Connection failed to open!");
             return;
         }
 
@@ -38,7 +46,7 @@ public class SerialReceiver {
             // Ard weener
             port.setParameters(9600, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            log(e.getMessage());
         }
     }
 
@@ -51,6 +59,10 @@ public class SerialReceiver {
             int len = port.read(buffer, serialTimeout);
 
             for (int i = 0; i < len - 3; i++) {
+                if (useTelemetry) {
+                    String string = String.format("%8s", Integer.toBinaryString(buffer[i] & 0xFF));
+                    telemetry.addLine(string);
+                }
                 if (buffer[i] == 0) {
                     byte high = buffer[i + 1];
                     byte low = buffer[i + 2];
@@ -70,7 +82,7 @@ public class SerialReceiver {
 
 
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            log(e.getMessage());
         }
 
         return order;
@@ -82,7 +94,15 @@ public class SerialReceiver {
         try {
             port.close();
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            log(e.getMessage());
+        }
+    }
+
+    private void log(String string) {
+        if (useTelemetry) {
+            telemetry.addLine(string);
+        } else {
+            System.out.println(string);
         }
     }
 }
