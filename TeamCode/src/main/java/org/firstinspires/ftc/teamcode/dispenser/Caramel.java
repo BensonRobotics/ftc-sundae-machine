@@ -1,17 +1,15 @@
 package org.firstinspires.ftc.teamcode.dispenser;
 
-
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-public class BrownieBits extends DispenserInterface {
-    //Initialize Values
-    public BrownieBits(HardwareMap hardwareMap){
-        DispenserInterface.price = 2.00f;
-        SauceInterface.motorIdx = 5;
-        SetMotor(hardwareMap.get(DcMotorEx.class, "BrownieBits"));
-
+public class Caramel extends SauceInterface{
+    public Caramel(HardwareMap hardwareMap){
+        SauceInterface.price = 2.00f;
+        SauceInterface.motorIdx = 1;
+        SetMotor(hardwareMap.get(DcMotorEx.class, "Caramel"));
     }
+
     @Override
     public DcMotorEx GetMotor(){
         return super.GetMotor();
@@ -22,8 +20,7 @@ public class BrownieBits extends DispenserInterface {
     }
 
     @Override
-    public void Dispense(int slots) {
-        super.Dispense(slots);
+    public void Dispense() {
+        super.Dispense();
     }
-
 }

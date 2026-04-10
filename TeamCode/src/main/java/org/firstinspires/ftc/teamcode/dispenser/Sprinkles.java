@@ -8,7 +8,8 @@ public class Sprinkles extends DispenserInterface {
     //Initialize Values
     public Sprinkles(HardwareMap hardwareMap){
         DispenserInterface.price = 2.00f;
-        SetMotor(hardwareMap.get(DcMotorEx.class, "topping1Motor"));
+        SauceInterface.motorIdx = 3;
+        SetMotor(hardwareMap.get(DcMotorEx.class, "Sprinkles"));
 
     }
     @Override

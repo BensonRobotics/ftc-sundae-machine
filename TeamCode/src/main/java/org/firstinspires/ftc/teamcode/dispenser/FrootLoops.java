@@ -12,7 +12,8 @@ public class FrootLoops extends DispenserInterface {
     //Initialize Values
     public FrootLoops(HardwareMap hardwareMap){
         DispenserInterface.price = 2.00f;
-        SetMotor(hardwareMap.get(DcMotorEx.class, "topping2Motor"));
+        SauceInterface.motorIdx = 4;
+        SetMotor(hardwareMap.get(DcMotorEx.class, "FrootLoops"));
 
     }
     @Override
