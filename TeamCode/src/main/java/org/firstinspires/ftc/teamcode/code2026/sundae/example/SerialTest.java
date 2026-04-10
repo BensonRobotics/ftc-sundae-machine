@@ -9,7 +9,7 @@ public class SerialTest extends OpMode {
 
     @Override
     public void init() {
-        serial = new SerialReceiver(this);
+        serial = new SerialReceiver(this, true);
     }
 
     @Override
