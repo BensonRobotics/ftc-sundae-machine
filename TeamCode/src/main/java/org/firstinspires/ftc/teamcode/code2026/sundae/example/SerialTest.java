@@ -9,14 +9,16 @@ public class SerialTest extends OpMode {
 
     @Override
     public void init() {
-        serial = new SerialReceiver(this, true);
+        serial = new SerialReceiver(this);
     }
 
     @Override
     public void loop() {
         short order = serial.tryGetOrder();
-        String string = String.format("%16s", Integer.toBinaryString(order & 0xFFFF));
-        telemetry.addData("Order", string);
+        if (order != -1) {
+            String string = String.format("%16s", Integer.toBinaryString(order & 0xFFFF)).replace(' ', '0');
+            telemetry.addData("Order", string);
+        }
     }
 
     @Override

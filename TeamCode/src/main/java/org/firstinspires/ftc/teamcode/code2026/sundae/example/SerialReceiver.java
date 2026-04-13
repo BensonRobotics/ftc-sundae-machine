@@ -12,22 +12,26 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 public class SerialReceiver {
-    private final int serialTimeout = 50; // Milliseconds
+    private final int serialTimeout = 20; // Milliseconds
     private UsbSerialPort port;
-    private boolean useTelemetry;
     private Telemetry telemetry;
-    SerialReceiver(OpMode opMode, boolean useTelemetry) {
-        this.useTelemetry = useTelemetry;
+    private final Queue<Byte> accumulator = new LinkedList<>();
+    private final int accumulatorMax = 16;
+    private final int packetLength = 3;
+    private final byte header = 0x7E;
+    SerialReceiver(OpMode opMode) {
         telemetry = opMode.telemetry;
         Context context = opMode.hardwareMap.appContext;
         // Find all available drivers from attached devices.
         UsbManager manager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
         List<UsbSerialDriver> availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(manager);
         if (availableDrivers.isEmpty()) {
-            log("No drivers found!");
+            telemetry.addLine("No drivers found!");
             return;
         }
 
@@ -36,7 +40,7 @@ public class SerialReceiver {
         UsbDeviceConnection connection = manager.openDevice(driver.getDevice());
         if (connection == null) {
             // add UsbManager.requestPermission(driver.getDevice(), ..) handling here
-            log("Connection failed to open!");
+            telemetry.addLine("Connection failed to open!");
             return;
         }
 
@@ -46,63 +50,54 @@ public class SerialReceiver {
             // Ard weener
             port.setParameters(9600, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
         } catch (IOException e) {
-            log(e.getMessage());
+            telemetry.addLine(e.getMessage());
         }
     }
 
-    short tryGetOrder() { // Returns -1 if no order received
-        short order = -1;
-        boolean failedChecksum = false;
-        byte[] buffer = new byte[16]; // More buffer than the rock
+    short tryGetOrder() { // Returns 0 if no order received
+        short order = 0;
+        byte[] buffer = new byte[8]; // More buffer than the rock
 
         try {
             int len = port.read(buffer, serialTimeout);
 
-            for (int i = 0; i < len - 3; i++) {
-                if (useTelemetry) {
-                    String string = String.format("%8s", Integer.toBinaryString(buffer[i] & 0xFF));
-                    telemetry.addLine(string);
-                }
-                if (buffer[i] == 0) {
-                    byte high = buffer[i + 1];
-                    byte low = buffer[i + 2];
-                    byte checksum = buffer[i + 3];
+            for (int i = 0; i < len; i++) {
+                accumulator.add(buffer[i]);
+                if (accumulator.size() > accumulatorMax) { accumulator.poll(); }
+            }
+        } catch (IOException e) {
+            telemetry.addLine(e.getMessage());
+        }
 
-                    failedChecksum = !((high ^ low) == checksum);
-                    if (!failedChecksum) {
-                        order = (short) (((high & 0xFF) << 8) | (low & 0xFF));
-                        port.write(packet(0), serialTimeout);
+        while (!accumulator.isEmpty()) {
+            Byte firstByte = accumulator.peek();
+                if (firstByte == header) {
+                    if (accumulator.size() - 1 >= packetLength) {
+                        byte high = accumulator.poll();
+                        byte low = accumulator.poll();
+                        byte checksum = accumulator.poll();
+
+                        if ((high ^ low) == checksum) {
+                            order = (short) (((high & 0xFF) << 8) | (low & 0xFF));
+                            accumulator.clear();
+                            break;
+                        }
+                    } else {
                         break;
                     }
+                } else {
+                    accumulator.poll();
                 }
-            }
-            if (failedChecksum) {
-                port.write(packet(-1), serialTimeout);
-            }
-
-
-        } catch (IOException e) {
-            log(e.getMessage());
         }
 
         return order;
     }
 
-    private static byte[] packet(int val) { return new byte[] {(byte) val}; }
-
     void close() {
         try {
             port.close();
         } catch (IOException e) {
-            log(e.getMessage());
-        }
-    }
-
-    private void log(String string) {
-        if (useTelemetry) {
-            telemetry.addLine(string);
-        } else {
-            System.out.println(string);
+            telemetry.addLine(e.getMessage());
         }
     }
 }
