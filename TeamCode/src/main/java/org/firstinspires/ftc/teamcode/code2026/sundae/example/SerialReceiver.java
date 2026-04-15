@@ -22,14 +22,14 @@ public class SerialReceiver {
     // Vanilla = 2, Chocolate = 1, Strawberry = 0
     // M&Ms = 9, Froot = 8, Brownie = 3, Sprinkles = 6, Choc sauce = 4, Caramel = 5, Cream = 7
     private final int serialTimeout = 20, usbRetryInterval = 100; // Milliseconds
-    Context context;
+    private final Context context;
     private UsbSerialPort port;
-    private Telemetry telemetry;
+    private final Telemetry telemetry;
     private final Queue<Byte> accumulator = new LinkedList<>();
     private final int packetLength = 4;
     private final byte header = 0x7E;
     private final boolean debug;
-    private ElapsedTime usbRetry;
+    private final ElapsedTime usbRetry;
     SerialReceiver(OpMode opMode, boolean debug) {
         telemetry = opMode.telemetry;
         this.debug = debug;

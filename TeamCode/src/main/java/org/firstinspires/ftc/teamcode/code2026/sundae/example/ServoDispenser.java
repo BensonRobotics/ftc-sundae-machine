@@ -19,7 +19,7 @@ public class ServoDispenser extends Thread implements Dispenser {
         this.dispenseTime = dispenseTime;
         timer = new ElapsedTime();
 
-        this.start();
+        start();
     }
     @Override
     public void dispense() {

@@ -23,7 +23,7 @@ public class RotaryDispenser extends Thread implements Dispenser {
         motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motor.setPower(1);
 
-        this.start();
+        start();
     }
     @Override
     public void dispense() { slotTally += spd; }

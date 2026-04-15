@@ -23,7 +23,7 @@ public class LiquidDispenser extends Thread implements Dispenser {
         motor.setPower(1);
 
         timer = new ElapsedTime();
-        this.start();
+        start();
     }
     @Override
     public int getPosition() { return position; }

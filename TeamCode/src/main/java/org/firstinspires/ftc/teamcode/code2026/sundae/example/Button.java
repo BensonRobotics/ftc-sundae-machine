@@ -19,7 +19,7 @@ public class Button extends Thread {
         light.setMode(DigitalChannel.Mode.OUTPUT);
 
         blinkTimer = new ElapsedTime();
-        this.start();
+        start();
     }
 
     void setLightMode(LightMode mode) { lightMode = mode; }

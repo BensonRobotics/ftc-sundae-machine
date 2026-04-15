@@ -7,15 +7,13 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 
 @Autonomous
 public class SundaeMachine extends OpMode {
     SerialReceiver serialReceiver;
-    List<Dispenser> dispensers = new ArrayList<>();
+    Dispenser[] dispensers;
     Queue<Order> orders = new LinkedList<>();
     Order currentOrder;
     Integer currentTopping;
@@ -30,11 +28,17 @@ public class SundaeMachine extends OpMode {
     public void init() {
         serialReceiver = new SerialReceiver(this, false);
 
-        dispensers.add(new LiquidDispenser(this, "chocolateDispenser", 500, 1000, 0));
-        dispensers.add(new LiquidDispenser(this, "caramelDispenser", 500, 1000, 0));
-        dispensers.add(new RotaryDispenser(this, "sprinkleDispenser", 2, 6745));
-        dispensers.add(new RotaryDispenser(this, "mnmDispenser", 2, 8400));
-        // etc.
+        dispensers = new Dispenser[]{
+                new LiquidDispenser(this, "chocolateDispenser", 500, 1000, 0),
+                new LiquidDispenser(this, "caramelDispenser", 500, 1000, 0),
+                new RotaryDispenser(this, "sprinkleDispenser", 2, 6745),
+                new RotaryDispenser(this, "mnmDispenser", 2, 8400),
+                new RotaryDispenser(this, "brownieDispenser", 2, 0),
+                new RotaryDispenser(this, "frootDispenser", 2, 0),
+                new ServoDispenser(this, "creamServo", 0.3, 750, 0)
+        };
+
+        if (Order.flavorMap.length != dispensers.length) { throw new RuntimeException("Invalid number of toppings!"); }
 
         conveyor = hardwareMap.get(DcMotorEx.class, "conveyorMotor");
         conveyor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -70,13 +74,13 @@ public class SundaeMachine extends OpMode {
 
             case TRAVERSE:
                 if (!conveyor.isBusy() && currentTopping != null) {
-                    dispensers.get(currentTopping).dispense();
+                    dispensers[currentTopping].dispense();
                     state = State.DISPENSE;
                 }
                 break;
 
             case DISPENSE:
-                if (dispensers.get(currentTopping).getCompletion() >= 1) {
+                if (dispensers[currentTopping].getCompletion() >= 1) {
                     state = State.DRIP;
                     dripTimer.reset();
                 }
@@ -117,7 +121,7 @@ public class SundaeMachine extends OpMode {
     void moveNext() {
         currentTopping = currentOrder.toppings.poll();
         if (currentTopping != null) {
-            conveyor.setTargetPosition(dispensers.get(currentTopping).getPosition());
+            conveyor.setTargetPosition(dispensers[currentTopping].getPosition());
             conveyor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             conveyor.setPower(1);
             state = State.TRAVERSE;
@@ -130,7 +134,7 @@ public class SundaeMachine extends OpMode {
     }
 
     void reset() {
-        if (currentTopping != null) { dispensers.get(currentTopping).stopDispensing(); }
+        if (currentTopping != null) { dispensers[currentTopping].stopDispensing(); }
         currentOrder = null;
         conveyor.setMotorEnable();
         resetButton.setLightMode(Button.LightMode.BLINK);
