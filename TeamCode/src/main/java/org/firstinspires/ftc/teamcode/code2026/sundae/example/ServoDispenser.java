@@ -6,18 +6,20 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-public class ServoDispenser implements Dispenser {
-    Servo servo;
-    ElapsedTime timer;
+public class ServoDispenser extends Thread implements Dispenser {
+    private final Servo servo;
+    private final ElapsedTime timer;
     private final double dispenseAngle;
-    private final int dispenseTime;
+    private final int dispenseTime, position;
 
-    ServoDispenser(OpMode opMode, String name, double dispenseAngle, int dispenseTime, boolean reverse) {
+    ServoDispenser(OpMode opMode, String name, double dispenseAngle, int dispenseTime, int position) {
+        this.position = position;
         servo = opMode.hardwareMap.get(Servo.class, name);
-        servo.setDirection(reverse ? Servo.Direction.REVERSE : Servo.Direction.FORWARD);
         this.dispenseAngle = dispenseAngle;
         this.dispenseTime = dispenseTime;
         timer = new ElapsedTime();
+
+        this.start();
     }
     @Override
     public void dispense() {
@@ -29,9 +31,11 @@ public class ServoDispenser implements Dispenser {
     public double getCompletion() { return MathUtils.clamp(timer.milliseconds() / dispenseTime, 0, 1); }
 
     @Override
-    public void update() {
-        if (servo.getPosition() == dispenseAngle && timer.milliseconds() >= dispenseTime) {
-            servo.setPosition(0);
-        }
-    }
+    public void run() { if (servo.getPosition() == dispenseAngle && timer.milliseconds() >= dispenseTime) { stopDispensing(); } }
+
+    @Override
+    public int getPosition() { return position; }
+
+    @Override
+    public void stopDispensing() { servo.setPosition(0); }
 }
