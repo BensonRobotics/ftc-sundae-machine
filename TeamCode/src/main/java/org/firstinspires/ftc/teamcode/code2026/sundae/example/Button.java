@@ -6,10 +6,10 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class Button extends Thread {
-    private final DigitalChannel button, light;
+    private DigitalChannel button, light;
     private boolean buttonLast = true;
     private LightMode lightMode = LightMode.OFF;
-    private final ElapsedTime blinkTimer;
+    private ElapsedTime blinkTimer;
     private final int blinkInterval = 250;
     Button(OpMode opMode, String buttonName, String lightName) {
         HardwareMap hardwareMap = opMode.hardwareMap;

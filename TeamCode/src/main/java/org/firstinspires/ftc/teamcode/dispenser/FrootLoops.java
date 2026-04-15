@@ -11,8 +11,9 @@ import java.lang.reflect.Constructor;
 public class FrootLoops extends DispenserInterface {
     //Initialize Values
     public FrootLoops(HardwareMap hardwareMap){
-        DispenserInterface.price = 2.00f;
-        SauceInterface.motorIdx = 4;
+        price = 2.00f;
+        motorIdx = 4;
+        tickAmount = 6745;
         SetMotor(hardwareMap.get(DcMotorEx.class, "FrootLoops"));
 
     }

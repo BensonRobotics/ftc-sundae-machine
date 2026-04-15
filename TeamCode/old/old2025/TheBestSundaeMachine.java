@@ -86,6 +86,7 @@ public class TheBestSundaeMachine extends LinearOpMode implements SignalReader {
     private final ElapsedTime debounceTimer = new ElapsedTime();
     private final ElapsedTime bowlDepositTimer = new ElapsedTime();
 
+
     // State management using enum
     private enum MachineState {
         IDLE,

@@ -1,12 +1,15 @@
 package org.firstinspires.ftc.teamcode.dispenser;
 
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 public class Caramel extends SauceInterface{
-    public Caramel(HardwareMap hardwareMap){
-        SauceInterface.price = 2.00f;
-        SauceInterface.motorIdx = 1;
+    public Caramel(HardwareMap hardwareMap, LinearOpMode dispenserOpMode){
+        SauceInterface.dispenserOpMode = dispenserOpMode;
+        price = 2.00f;
+        motorIdx = 1;
+        tickAmount = 2060;
         SetMotor(hardwareMap.get(DcMotorEx.class, "Caramel"));
     }
 
@@ -20,7 +23,7 @@ public class Caramel extends SauceInterface{
     }
 
     @Override
-    public void Dispense() {
-        super.Dispense();
+    public void Dispense(int length) {
+        super.Dispense(length);
     }
 }
