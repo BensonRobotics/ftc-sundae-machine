@@ -7,8 +7,8 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 public class Sprinkles extends DispenserInterface {
     //Initialize Values
     public Sprinkles(HardwareMap hardwareMap){
-        DispenserInterface.price = 2.00f;
-        SauceInterface.motorIdx = 3;
+        price = 2.00f;
+        motorIdx = 3;
         SetMotor(hardwareMap.get(DcMotorEx.class, "Sprinkles"));
 
     }
