@@ -1,19 +1,23 @@
 package org.firstinspires.ftc.teamcode.code2026.sundae.example;
 
+import org.firstinspires.ftc.teamcode.dispenser.Caramel;
+import org.firstinspires.ftc.teamcode.dispenser.SauceInterface;
+
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
 public class Order {
-    static final Flavor[] flavorMap = { Flavor.STRAWBERRY, Flavor.CHOCOLATE, Flavor.VANILLA };
-    static final int[] toppingMap = { 5, 0, 1, 2, 6, 3, 4 };
-    static final int numFlavors = 3, numToppings = 7, iceCreamPrice = 300, toppingPrice = 50;
-    final Queue<Integer> toppings;
-    final Flavor flavor;
-    final int price;
+    public static final Flavor[] flavorMap = { Flavor.STRAWBERRY, Flavor.CHOCOLATE, Flavor.VANILLA };
+    public static final int[] toppingMap = { 5, 0, 1, 2, 6, 3, 4 };
+    public static final int numFlavors = 3, numToppings = 7, iceCreamPrice = 300, toppingPrice = 50;
+    public final Queue<Integer> toppings;
+    public final Flavor flavor;
+    public final int price;
 
-    Order(short order) {
+    public Order(short order) {
         toppings = getToppings(order);
         flavor = getFlavor(order);
         price = getPrice(flavor, toppings);

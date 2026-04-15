@@ -10,7 +10,7 @@ public class BrownieBits extends DispenserInterface {
         price = 2.00f;
         motorIdx = 5;
         tickAmount = 10000;
-        SetMotor(hardwareMap.get(DcMotorEx.class, "BrownieBits"));
+        SetMotor(hardwareMap.get(DcMotorEx.class, "brownieMotor"));
 
     }
     @Override

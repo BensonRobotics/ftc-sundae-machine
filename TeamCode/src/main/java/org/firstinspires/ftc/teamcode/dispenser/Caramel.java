@@ -10,7 +10,7 @@ public class Caramel extends SauceInterface{
         price = 2.00f;
         motorIdx = 1;
         tickAmount = 2060;
-        SetMotor(hardwareMap.get(DcMotorEx.class, "Caramel"));
+        SetMotor(hardwareMap.get(DcMotorEx.class, "caramelMotor"));
     }
 
     @Override
