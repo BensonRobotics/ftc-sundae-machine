@@ -9,6 +9,7 @@ public class Sprinkles extends DispenserInterface {
     public Sprinkles(HardwareMap hardwareMap){
         price = 2.00f;
         motorIdx = 3;
+        tickAmount = 5115;
         SetMotor(hardwareMap.get(DcMotorEx.class, "Sprinkles"));
 
     }

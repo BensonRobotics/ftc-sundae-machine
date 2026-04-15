@@ -27,14 +27,13 @@ public abstract class SauceInterface {
 
         while (motor.isBusy() && dispenserOpMode.opModeIsActive()) {
         }
-        int loopsToWait = 1000000;
         motor.setPower(0);
         sleep(length);
-        while(dispenserOpMode.opModeIsActive() && loopsToWait > 0){
-            loopsToWait--;
+        while(dispenserOpMode.opModeIsActive()){
         }
-        motor.setPower(1);
         motor.setTargetPosition((int)position);
+        motor.setPower(1);
+
         while (motor.isBusy() && dispenserOpMode.opModeIsActive()) {
         }
         motor.setPower(0);

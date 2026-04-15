@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.dispenser;
 
+import static android.os.SystemClock.sleep;
 import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -21,9 +22,11 @@ public abstract class DispenserInterface {
         motor.setTargetPosition((int) (amountToSpin + Math.floor(position)));
         motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motor.setTargetPositionTolerance(1);
+
         //motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         motor.setPower(1);
+        sleep(1000);
     }
     public void Calibrate(){
         double position = motor.getCurrentPosition();

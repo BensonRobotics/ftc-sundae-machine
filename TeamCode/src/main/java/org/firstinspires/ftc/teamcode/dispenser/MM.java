@@ -9,6 +9,7 @@ public class MM extends DispenserInterface {
     public MM(HardwareMap hardwareMap){
         price = 2.00f;
         motorIdx = 4;
+        tickAmount = 8400;
         SetMotor(hardwareMap.get(DcMotorEx.class, "MM"));
 
     }

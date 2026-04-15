@@ -9,6 +9,7 @@ public class Chocolate extends SauceInterface{
         SauceInterface.dispenserOpMode = dispenserOpMode;
         price = 2.00f;
         motorIdx = 2;
+        tickAmount = 3715;
         SetMotor(hardwareMap.get(DcMotorEx.class, "Chocolate"));
     }
 

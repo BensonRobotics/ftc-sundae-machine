@@ -13,6 +13,7 @@ public class FrootLoops extends DispenserInterface {
     public FrootLoops(HardwareMap hardwareMap){
         price = 2.00f;
         motorIdx = 4;
+        tickAmount = 6745;
         SetMotor(hardwareMap.get(DcMotorEx.class, "FrootLoops"));
 
     }
