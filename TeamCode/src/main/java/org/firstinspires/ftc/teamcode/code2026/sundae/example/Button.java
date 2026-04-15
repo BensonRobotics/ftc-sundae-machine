@@ -6,11 +6,10 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class Button extends Thread {
-    private DigitalChannel button, light;
+    private final DigitalChannel button, light;
     private boolean buttonLast = true;
     private LightMode lightMode = LightMode.OFF;
-    private ElapsedTime blinkTimer;
-    private final int blinkInterval = 250;
+    private final ElapsedTime blinkTimer;
     Button(OpMode opMode, String buttonName, String lightName) {
         HardwareMap hardwareMap = opMode.hardwareMap;
         button = hardwareMap.get(DigitalChannel.class, buttonName);
@@ -51,7 +50,7 @@ public class Button extends Thread {
                 break;
 
             case BLINK:
-                if (blinkTimer.milliseconds() >= blinkInterval) {
+                if (blinkTimer.milliseconds() >= 250) {
                     blinkTimer.reset();
                     light.setState(!light.getState());
                 }

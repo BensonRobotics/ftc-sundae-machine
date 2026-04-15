@@ -18,7 +18,7 @@ public class SundaeMachine extends OpMode {
     List<Dispenser> dispensers = new ArrayList<>();
     Queue<Order> orders = new LinkedList<>();
     Order currentOrder;
-    int currentTopping;
+    Integer currentTopping;
     State state = State.IDLE;
     DcMotorEx conveyor;
     Button startButton, resetButton, stopButton;
@@ -69,7 +69,7 @@ public class SundaeMachine extends OpMode {
                 break;
 
             case TRAVERSE:
-                if (!conveyor.isBusy()) {
+                if (!conveyor.isBusy() && currentTopping != null) {
                     dispensers.get(currentTopping).dispense();
                     state = State.DISPENSE;
                 }
@@ -115,8 +115,8 @@ public class SundaeMachine extends OpMode {
     }
 
     void moveNext() {
-        if (!currentOrder.toppings.isEmpty()) {
-            currentTopping = currentOrder.toppings.poll();
+        currentTopping = currentOrder.toppings.poll();
+        if (currentTopping != null) {
             conveyor.setTargetPosition(dispensers.get(currentTopping).getPosition());
             conveyor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             conveyor.setPower(1);
@@ -130,7 +130,9 @@ public class SundaeMachine extends OpMode {
     }
 
     void reset() {
-        dispensers.get(currentTopping).stopDispensing();
+        if (currentTopping != null) { dispensers.get(currentTopping).stopDispensing(); }
+        currentOrder = null;
+        conveyor.setMotorEnable();
         resetButton.setLightMode(Button.LightMode.BLINK);
         startButton.setLightMode(Button.LightMode.OFF);
         stopButton.setLightMode(Button.LightMode.ON);
