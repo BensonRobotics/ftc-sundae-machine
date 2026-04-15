@@ -1,21 +1,45 @@
 package org.firstinspires.ftc.teamcode.code2026.sundae.example;
 
-import com.qualcomm.robotcore.hardware.DcMotor;
+import androidx.core.math.MathUtils;
 
-public class LiquidDispenser implements Dispenser {
-    DcMotor motor;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+public class LiquidDispenser extends Thread implements Dispenser {
+    private final int position, dispenseAngle, dispenseTime;
+    private final DcMotorEx motor;
+    private final ElapsedTime timer;
+
+    LiquidDispenser(OpMode opMode, String name, int dispenseAngle, int dispenseTime, int position) {
+        this.position = position;
+        this.dispenseAngle = dispenseAngle;
+        this.dispenseTime = dispenseTime;
+        motor = opMode.hardwareMap.get(DcMotorEx.class, name);
+        motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motor.setTargetPosition(0);
+        motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        motor.setPower(1);
+
+        timer = new ElapsedTime();
+        this.start();
+    }
+    @Override
+    public int getPosition() { return position; }
+
+    @Override
+    public void stopDispensing() { motor.setTargetPosition(0); }
+
     @Override
     public void dispense() {
-
+        timer.reset();
+        motor.setTargetPosition(dispenseAngle);
     }
 
     @Override
-    public double getCompletion() {
-        return 0;
-    }
+    public double getCompletion() { return MathUtils.clamp(timer.milliseconds() / dispenseTime, 0, 1); }
 
     @Override
-    public void update() {
-
-    }
+    public void run() { if (timer.milliseconds() >= dispenseTime && motor.getTargetPosition() == dispenseAngle) { stopDispensing(); } }
 }
