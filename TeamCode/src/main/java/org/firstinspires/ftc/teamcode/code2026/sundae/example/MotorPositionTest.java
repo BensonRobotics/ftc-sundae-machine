@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 @Autonomous
 public class MotorPositionTest extends OpMode {
-    DcMotorEx[] motors;
+    DcMotorEx[] motors = new DcMotorEx[8];
 
     @Override
     public void init() {

@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-public class Button extends Thread {
+public class Button {
     private DigitalChannel button, light;
     private boolean buttonLast = true;
     private LightMode lightMode = LightMode.OFF;
@@ -17,9 +17,9 @@ public class Button extends Thread {
         light = hardwareMap.get(DigitalChannel.class, lightName);
         button.setMode(DigitalChannel.Mode.INPUT);
         light.setMode(DigitalChannel.Mode.OUTPUT);
+        light.setState(true);
 
         blinkTimer = new ElapsedTime();
-        start();
     }
 
     void setLightMode(LightMode mode) { lightMode = mode; }
@@ -36,7 +36,7 @@ public class Button extends Thread {
         return false;
     }
 
-    public void run() {
+    public void update() {
         switch (lightMode) {
             case ON:
                 if (light.getState()) {

@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-public class LiquidDispenser extends Thread implements Dispenser {
+public class LiquidDispenser implements Dispenser {
     private final int position, dispenseAngle, dispenseTime;
     private final DcMotorEx motor;
     private final ElapsedTime timer;
@@ -23,7 +23,6 @@ public class LiquidDispenser extends Thread implements Dispenser {
         motor.setPower(1);
 
         timer = new ElapsedTime();
-        start();
     }
     @Override
     public int getPosition() { return position; }
@@ -41,5 +40,5 @@ public class LiquidDispenser extends Thread implements Dispenser {
     public double getCompletion() { return MathUtils.clamp(timer.milliseconds() / dispenseTime, 0, 1); }
 
     @Override
-    public void run() { if (timer.milliseconds() >= dispenseTime && motor.getTargetPosition() == dispenseAngle) { stopDispensing(); } }
+    public void update() { if (timer.milliseconds() >= dispenseTime && motor.getTargetPosition() == dispenseAngle) { stopDispensing(); } }
 }
