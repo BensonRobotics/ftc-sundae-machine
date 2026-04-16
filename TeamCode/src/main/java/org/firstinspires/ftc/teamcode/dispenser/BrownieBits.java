@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 public class BrownieBits extends DispenserInterface {
     //Initialize Values
     public BrownieBits(HardwareMap hardwareMap){
-        price = 2.00f;
+        price = 0.5f;
         motorIdx = 5;
         tickAmount = 10000;
         SetMotor(hardwareMap.get(DcMotorEx.class, "brownieMotor"));

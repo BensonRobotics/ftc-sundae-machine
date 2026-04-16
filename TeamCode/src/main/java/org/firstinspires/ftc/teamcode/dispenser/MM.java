@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 public class MM extends DispenserInterface {
     //Initialize Values
     public MM(HardwareMap hardwareMap){
-        price = 2.00f;
+        price = 0.5f;
         motorIdx = 4;
         tickAmount = 8400;
         SetMotor(hardwareMap.get(DcMotorEx.class, "mnmMotor"));

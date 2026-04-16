@@ -16,7 +16,7 @@ public abstract class DispenserInterface {
     public int motorIdx;
     public int tickAmount;
     public void Dispense(int slots){
-        double position = motor.getCurrentPosition();
+        double position = 0;
         int amountToSpin = Math.toIntExact(Math.round(slots * tps));
         //motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motor.setTargetPosition((int) (amountToSpin + Math.floor(position)));
@@ -36,6 +36,8 @@ public abstract class DispenserInterface {
 
     public void SetMotor(DcMotorEx motor){
         this.motor = motor;
+        motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
     public DcMotorEx GetMotor(){

@@ -11,7 +11,7 @@ public class ReadMotorPosition extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        motor = hardwareMap.get(DcMotorEx.class, "conveyerMotor");
+        motor = hardwareMap.get(DcMotorEx.class, "caramelMotor");
         motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);

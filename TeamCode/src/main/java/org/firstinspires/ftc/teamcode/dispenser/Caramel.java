@@ -7,10 +7,10 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 public class Caramel extends SauceInterface{
     public Caramel(HardwareMap hardwareMap, LinearOpMode dispenserOpMode){
         SauceInterface.dispenserOpMode = dispenserOpMode;
-        price = 2.00f;
+        price = 0.5f;
         motorIdx = 1;
         tickAmount = 2060;
-        SetMotor(hardwareMap.get(DcMotorEx.class, "caramelMotor"));
+        SetMotor(hardwareMap.get(DcMotorEx.class, "chocolateMotor"));
     }
 
     @Override
@@ -26,4 +26,7 @@ public class Caramel extends SauceInterface{
     public void Dispense(int length) {
         super.Dispense(length);
     }
+
+    @Override
+    public void CloseValve(){super.CloseValve();}
 }

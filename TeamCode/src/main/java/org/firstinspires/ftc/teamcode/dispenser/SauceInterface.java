@@ -18,10 +18,9 @@ public abstract class SauceInterface {
     public static LinearOpMode dispenserOpMode;
     public int tickAmount;
     public void Dispense(int length){
-        double position = motor.getCurrentPosition();
+        int position = -5;
         int amountToSpin = Math.toIntExact(Math.round(tpd));
-        //motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motor.setTargetPosition((int) (amountToSpin + position));
+        motor.setTargetPosition(amountToSpin);
         motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motor.setPower(1);
@@ -30,17 +29,21 @@ public abstract class SauceInterface {
         }
         motor.setPower(0);
         sleep(length);
-        while(dispenserOpMode.opModeIsActive()){
-        }
-        motor.setTargetPosition((int)position);
+        motor.setTargetPosition(position);
+        motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motor.setPower(1);
 
-        while (motor.isBusy() && dispenserOpMode.opModeIsActive()) {
+        while ((motor.isBusy()) && dispenserOpMode.opModeIsActive()) {
         }
         motor.setPower(0);
-        //motor.setTargetPosition((int) position);
-        //motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        //motor.setPower(0.5);
+        motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        sleep(100);
+    }
+    public void CloseValve(){
+        motor.setTargetPosition(-8);
+        motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motor.setPower(1);
     }
     public void Calibrate(){
         double position = motor.getCurrentPosition();
@@ -50,6 +53,8 @@ public abstract class SauceInterface {
 
     public void SetMotor(DcMotorEx motor){
         this.motor = motor;
+        motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
     public DcMotorEx GetMotor(){
