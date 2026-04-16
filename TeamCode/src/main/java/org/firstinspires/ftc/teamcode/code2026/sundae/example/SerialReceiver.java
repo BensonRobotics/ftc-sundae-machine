@@ -31,7 +31,7 @@ public class SerialReceiver {
     private final byte header = 0x7E;
     private final boolean debug;
     private ElapsedTime usbRetry;
-    public SerialReceiver(OpMode opMode, boolean debug) {
+    SerialReceiver(OpMode opMode, boolean debug) {
         telemetry = opMode.telemetry;
         this.debug = debug;
         context = opMode.hardwareMap.appContext;
@@ -39,7 +39,7 @@ public class SerialReceiver {
         connectUSB();
     }
 
-    public short tryGetOrder() { // Returns 0 if no order received
+    short tryGetOrder() { // Returns 0 if no order received
         // Returns a 16-bit value, the 3 LSBs are the flavors, the next 7 are toppings
         short order = 0;
         byte[] buffer = new byte[packetLength]; // More buffer than the rock
@@ -90,7 +90,7 @@ public class SerialReceiver {
         return order;
     }
 
-    public void close() {
+    void close() {
         try {
             port.close();
         } catch (IOException e) {
