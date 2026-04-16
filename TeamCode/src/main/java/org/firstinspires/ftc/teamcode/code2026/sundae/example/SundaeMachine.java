@@ -1,7 +1,12 @@
 package org.firstinspires.ftc.teamcode.code2026.sundae.example;
 
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -10,6 +15,7 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,6 +24,7 @@ import java.util.Queue;
 
 @Autonomous
 public class SundaeMachine extends OpMode {
+    final int timeYouHaveLeft = 12; // Measured in hours
     SerialReceiver serialReceiver;
     Dispenser[] dispensers;
     Queue<Order> orderQueue = new LinkedList<>();
@@ -31,9 +38,12 @@ public class SundaeMachine extends OpMode {
     final int dripTime = 1000, deliverTime = 1000;
     final PIDFCoefficients conveyorPIDF = new PIDFCoefficients(5, 0, 0, 0);
     TelemetryManager panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
+    Gson gson = new Gson();
+    SharedPreferences prefs;
 
     @Override
     public void init() {
+        prefs = PreferenceManager.getDefaultSharedPreferences(hardwareMap.appContext);
         serialReceiver = new SerialReceiver(this, false);
 
         dispensers = new Dispenser[]{
@@ -72,7 +82,13 @@ public class SundaeMachine extends OpMode {
         stopButton.update();
         resetButton.update();
 
-        telemetry.addLine(conveyorMotor.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION).toString());
+        //telemetry.addLine(conveyorMotor.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION).toString());
+
+        String queueString = prefs.getString("orderQueue", "");
+        if (!queueString.isEmpty()) {
+            Type type = new TypeToken<LinkedList<Order>>(){}.getType();
+            orderQueue = gson.fromJson(queueString, type);
+        }
     }
 
     @Override
@@ -83,7 +99,12 @@ public class SundaeMachine extends OpMode {
         resetButton.update();
 
         short orderData = serialReceiver.tryGetOrder();
-        if (orderData != 0) { orderQueue.add(new Order(orderData)); }
+        if (orderData != 0) {
+            orderQueue.add(new Order(orderData));
+
+            String queueString = gson.toJson(orderQueue);
+            prefs.edit().putString("orderQueue", queueString).apply();
+        }
 
         switch (state) {
             case IDLE:
