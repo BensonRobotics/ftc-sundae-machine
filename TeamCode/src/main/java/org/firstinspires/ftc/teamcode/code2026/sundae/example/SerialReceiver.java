@@ -4,6 +4,7 @@ import android.content.Context;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 
+import com.bylazar.telemetry.TelemetryManager;
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
@@ -31,7 +32,7 @@ public class SerialReceiver {
     private final boolean debug;
     private final ElapsedTime usbRetry;
     SerialReceiver(OpMode opMode, boolean debug) {
-        telemetry = opMode.telemetry;
+        this.telemetry = opMode.telemetry;
         this.debug = debug;
         context = opMode.hardwareMap.appContext;
         usbRetry = new ElapsedTime();

@@ -11,7 +11,7 @@ public class SerialTest extends OpMode {
 
     @Override
     public void init() {
-        serial = new SerialReceiver(this, false);
+        serial = new SerialReceiver(this,false);
     }
 
     @Override

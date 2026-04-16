@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.code2026.sundae.example;
 
+import com.bylazar.telemetry.PanelsTelemetry;
+import com.bylazar.telemetry.TelemetryManager;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -8,14 +10,17 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
 import java.util.Queue;
 
 @Autonomous
 public class SundaeMachine extends OpMode {
     SerialReceiver serialReceiver;
     Dispenser[] dispensers;
-    Queue<Order> orders = new LinkedList<>();
+    Queue<Order> orderQueue = new LinkedList<>();
     Order currentOrder;
     Integer currentTopping;
     State state = State.IDLE;
@@ -24,7 +29,8 @@ public class SundaeMachine extends OpMode {
     DigitalChannel minEndstop, maxEndstop;
     ElapsedTime dripTimer = new ElapsedTime(), deliverTimer = new ElapsedTime();
     final int dripTime = 1000, deliverTime = 1000;
-    final PIDFCoefficients conveyorPIDF = new PIDFCoefficients(5, 0, 0, 0.01);
+    final PIDFCoefficients conveyorPIDF = new PIDFCoefficients(5, 0, 0, 0);
+    TelemetryManager panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
 
     @Override
     public void init() {
@@ -40,7 +46,8 @@ public class SundaeMachine extends OpMode {
                 new ServoDispenser(this, "creamServo", 0.3, 750, 12039)
         };
 
-        if (Order.toppingMap.length != dispensers.length) { throw new RuntimeException("Invalid number of toppings!"); }
+        // If this underlines yellow then you're good
+        if (Order.numToppings != dispensers.length) { throw new RuntimeException("Invalid number of toppings!"); }
 
         conveyorMotor = hardwareMap.get(DcMotorEx.class, "conveyorMotor");
         conveyorMotor.setTargetPositionTolerance(30);
@@ -76,14 +83,14 @@ public class SundaeMachine extends OpMode {
         resetButton.update();
 
         short orderData = serialReceiver.tryGetOrder();
-        if (orderData != 0) { orders.add(new Order(orderData)); }
+        if (orderData != 0) { orderQueue.add(new Order(orderData)); }
 
         switch (state) {
             case IDLE:
-                if (!orders.isEmpty()) {
+                if (!orderQueue.isEmpty()) {
                     startButton.setLightMode(Button.LightMode.ON);
                     if (startButton.wasPressed()) {
-                        currentOrder = orders.poll();
+                        currentOrder = orderQueue.poll();
                         moveNext();
                         startButton.setLightMode(Button.LightMode.BLINK);
                     }
@@ -136,7 +143,34 @@ public class SundaeMachine extends OpMode {
             stopButton.setLightMode(Button.LightMode.BLINK);
             startButton.setLightMode(Button.LightMode.OFF);
         }
+
+        if (!orderQueue.isEmpty()) {
+            List<Order> orderList = new ArrayList<>(orderQueue);
+            for (int i = 0; i < orderQueue.size(); i++) {
+                int placeNum = i + 1;
+                String suffix = "th";
+                switch (placeNum) {
+                    case 1: suffix = "st"; break;
+                    case 2: suffix = "nd"; break;
+                    case 3: suffix = "rd"; break;
+                }
+                String place = placeNum+suffix;
+
+                Order order = orderList.get(i);
+                String flavor = order.flavor.toString();
+
+                String price = String.format(Locale.US, "$%.2f", order.price * 0.01);
+
+                panelsTelemetry.addLine(place+": "+flavor+", "+price);
+            }
+        } else {
+            panelsTelemetry.addLine("Queue is empty.");
+        }
+
+        panelsTelemetry.update(telemetry);
     }
+
+    public void stop() { serialReceiver.close(); }
 
     void moveNext() {
         currentTopping = currentOrder.toppings.poll();

@@ -20,7 +20,7 @@ public class Order {
     }
 
     private static Flavor getFlavor(short order) {
-        Flavor flavor = null;
+        Flavor flavor = Flavor.NONE;
         for (int i = 0; i < numFlavors; i++) {
             if (((order >> i) & 1) == 1) {
                 flavor = flavorMap[i];
