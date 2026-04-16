@@ -13,7 +13,7 @@ public abstract class SauceInterface {
     public DcMotorEx motor;
     public float price;
     public final double tpr = 5281.1;
-    public final double tpd = 134.425;
+    public final double tpd = 80;
     public int motorIdx;
     public static LinearOpMode dispenserOpMode;
     public int tickAmount;
@@ -23,6 +23,7 @@ public abstract class SauceInterface {
         //motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motor.setTargetPosition((int) (amountToSpin + position));
         motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motor.setPower(1);
 
         while (motor.isBusy() && dispenserOpMode.opModeIsActive()) {
