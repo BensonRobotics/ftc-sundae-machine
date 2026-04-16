@@ -88,11 +88,19 @@ public class IceCream2026 extends LinearOpMode {
 
         while (opModeIsActive()) {
             telemetry.addData("Status", status.toString());
-            telemetry.update();
             if(receivedOrder == 0){
                 receivedOrder = serialReceiver.tryGetOrder();
             }
+            else{
+                telemetry.addData("Please load ice cream flavor ", new Order(receivedOrder).flavor.toString());
+                telemetry.addLine("Press start button once bowl is loaded");
+                if(status == IceCreamStatus.Resetting){
+                    operatorLEDs[0].setState(false);
+                }
 
+            }
+
+            telemetry.update();
 
             for (int i = 0; i < operatorButtons.length; i++) {
                 if (!operatorButtons[i].getState()) {
@@ -146,30 +154,20 @@ public class IceCream2026 extends LinearOpMode {
     }
 
     public void startCycle() {
-
-        telemetry.addLine("Debug: Entering startCycle");
-        telemetry.update();
         status = IceCreamStatus.Moving;
-
-        telemetry.addData("Debug: Order received! Order is as follows: ", receivedOrder);
-        telemetry.addLine("Debug, checking");
-        telemetry.update();
         List<DispenserInterface> toppings = new ArrayList<>();
         List<SauceInterface> sauces = new ArrayList<>();
         List<CreamInterface> creams = new ArrayList<>();
         Flavor flavor;
         if (receivedOrder != 0) {
-            //Need to determine order of toppings in queue to separate normal toppings from the sauces
             order = new Order(receivedOrder);
-            telemetry.addData("Order length", order.toppings.size());
-            telemetry.update();
             List<Integer> incomingToppings = new ArrayList<>(order.toppings);
             for (int i = 0; i < incomingToppings.size(); i++) {
                 if (incomingToppings.get(i) == 0 || incomingToppings.get(i) == 1) {
                     sauces.add(sauceMap.get(incomingToppings.get(i)));
                 } else if (incomingToppings.get(i) == 6) {
-                    //Out of range on this line
-                    creams.add(creamMap.get(incomingToppings.get(i)));
+
+                    creams.add(creamMap.get(incomingToppings.get(i) - 6));
                 } else {
                     toppings.add(toppingMap.get(incomingToppings.get(i) - 2));
                 }
@@ -179,7 +177,6 @@ public class IceCream2026 extends LinearOpMode {
         } else {
             telemetry.addLine("No Order received.");
             telemetry.addLine("try again once an order has been inputted.");
-            //telemetry.update();
             return;
         }
 
