@@ -9,6 +9,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
@@ -22,13 +23,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Queue;
 
-@Autonomous
+@TeleOp
 public class SundaeMachine extends OpMode {
     final int timeYouHaveLeft = 12; // Measured in hours
     SerialReceiver serialReceiver;
     Dispenser[] dispensers;
     Queue<Order> orderQueue = new LinkedList<>();
-    Order currentOrder;
     Integer currentTopping;
     State state = State.IDLE;
     DcMotorEx conveyorMotor;
@@ -36,10 +36,11 @@ public class SundaeMachine extends OpMode {
     DigitalChannel minEndstop, maxEndstop;
     ElapsedTime dripTimer = new ElapsedTime(), deliverTimer = new ElapsedTime();
     final int dripTime = 1000, deliverTime = 1000;
-    final PIDFCoefficients conveyorPIDF = new PIDFCoefficients(5, 0, 0, 0);
+    final double pK = 5;
     TelemetryManager panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
     Gson gson = new Gson();
     SharedPreferences prefs;
+    int lastQueueLength, orderTally;
 
     @Override
     public void init() {
@@ -65,7 +66,7 @@ public class SundaeMachine extends OpMode {
         conveyorMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         conveyorMotor.setTargetPosition(0);
         conveyorMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        //conveyorMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, conveyorPIDF);
+        conveyorMotor.setPositionPIDFCoefficients(pK);
         conveyorMotor.setPower(1);
 
         startButton = new Button(this, "startButton", "startButtonled");
@@ -79,15 +80,12 @@ public class SundaeMachine extends OpMode {
 
         stopButton.setLightMode(Button.LightMode.ON);
         resetButton.setLightMode(Button.LightMode.ON);
-        stopButton.update();
-        resetButton.update();
-
-        //telemetry.addLine(conveyorMotor.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION).toString());
 
         String queueString = prefs.getString("orderQueue", "");
         if (!queueString.isEmpty()) {
             Type type = new TypeToken<LinkedList<Order>>(){}.getType();
             orderQueue = gson.fromJson(queueString, type);
+            orderTally = orderQueue.peek().number;
         }
     }
 
@@ -99,19 +97,19 @@ public class SundaeMachine extends OpMode {
         resetButton.update();
 
         short orderData = serialReceiver.tryGetOrder();
-        if (orderData != 0) {
-            orderQueue.add(new Order(orderData));
+        if (orderData != 0) { orderQueue.add(new Order(orderData, orderTally++)); }
 
+        if (lastQueueLength != orderQueue.size()) {
             String queueString = gson.toJson(orderQueue);
             prefs.edit().putString("orderQueue", queueString).apply();
         }
+        lastQueueLength = orderQueue.size();
 
         switch (state) {
             case IDLE:
                 if (!orderQueue.isEmpty()) {
                     startButton.setLightMode(Button.LightMode.ON);
                     if (startButton.wasPressed()) {
-                        currentOrder = orderQueue.poll();
                         moveNext();
                         startButton.setLightMode(Button.LightMode.BLINK);
                     }
@@ -160,29 +158,22 @@ public class SundaeMachine extends OpMode {
         if (stopButton.wasPressed()) {
             state = State.STOP;
             conveyorMotor.setMotorDisable();
-            for (Dispenser dispenser : dispensers) { dispenser.stopDispensing(); }
+            if (currentTopping != null) { dispensers[currentTopping].stopDispensing(); }
             stopButton.setLightMode(Button.LightMode.BLINK);
             startButton.setLightMode(Button.LightMode.OFF);
         }
 
         if (!orderQueue.isEmpty()) {
-            List<Order> orderList = new ArrayList<>(orderQueue);
-            for (int i = 0; i < orderQueue.size(); i++) {
-                int placeNum = i + 1;
-                String suffix = "th";
-                switch (placeNum) {
-                    case 1: suffix = "st"; break;
-                    case 2: suffix = "nd"; break;
-                    case 3: suffix = "rd"; break;
+            Queue<Order> queueCopy = new LinkedList<>(orderQueue);
+            panelsTelemetry.addLine("Now serving: " + orderQueue.poll().toString());
+            panelsTelemetry.addLine(" ");
+            while (!queueCopy.isEmpty()) {
+                if (queueCopy.size() != 1) {
+                    panelsTelemetry.addLine(queueCopy.poll().toString());
+                } else {
+                    panelsTelemetry.addLine(" ");
+                    panelsTelemetry.addLine("Last order: " + queueCopy.poll().toString());
                 }
-                String place = placeNum+suffix;
-
-                Order order = orderList.get(i);
-                String flavor = order.flavor.toString();
-
-                String price = String.format(Locale.US, "$%.2f", order.price * 0.01);
-
-                panelsTelemetry.addLine(place+": "+flavor+", "+price);
             }
         } else {
             panelsTelemetry.addLine("Queue is empty.");
@@ -194,13 +185,14 @@ public class SundaeMachine extends OpMode {
     public void stop() { serialReceiver.close(); }
 
     void moveNext() {
-        currentTopping = currentOrder.toppings.poll();
+        currentTopping = orderQueue.peek().toppings.poll();
         if (currentTopping != null) {
             conveyorMotor.setTargetPosition(dispensers[currentTopping].getPosition());
             conveyorMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             conveyorMotor.setPower(1);
             state = State.TRAVERSE;
         } else {
+            orderQueue.poll();
             deliverTimer.reset();
             conveyorMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             conveyorMotor.setPower(1);
@@ -210,7 +202,6 @@ public class SundaeMachine extends OpMode {
 
     void reset() {
         if (currentTopping != null) { dispensers[currentTopping].stopDispensing(); }
-        currentOrder = null;
         conveyorMotor.setMotorEnable();
         resetButton.setLightMode(Button.LightMode.BLINK);
         startButton.setLightMode(Button.LightMode.OFF);

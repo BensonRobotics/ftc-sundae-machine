@@ -11,6 +11,7 @@ public class LiquidDispenser implements Dispenser {
     private final int position, dispenseAngle, dispenseTime;
     private final DcMotorEx motor;
     private final ElapsedTime timer;
+    private final double pK = 15;
 
     LiquidDispenser(OpMode opMode, String name, int dispenseAngle, int dispenseTime, int position) {
         this.position = position;
@@ -21,6 +22,7 @@ public class LiquidDispenser implements Dispenser {
         motor.setTargetPosition(0);
         motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motor.setPower(1);
+        motor.setPositionPIDFCoefficients(pK);
 
         timer = new ElapsedTime();
     }
