@@ -1,11 +1,8 @@
 package org.firstinspires.ftc.teamcode.code2026.sundae.example;
 
-import androidx.annotation.NonNull;
-
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Queue;
 
 public class Order {
@@ -14,23 +11,12 @@ public class Order {
     static final int numFlavors = 3, numToppings = 7, iceCreamPrice = 300, toppingPrice = 50;
     final Queue<Integer> toppings;
     final Flavor flavor;
-    final int price, number;
+    final int price;
 
-    Order(short order, int number) {
+    Order(short order) {
         toppings = getToppings(order);
         flavor = getFlavor(order);
         price = getPrice(flavor, toppings);
-        this.number = number;
-    }
-
-    @Override
-    public String toString() {
-        String flavorString = flavor.toString();
-        flavorString = flavorString.substring(0, 1).toUpperCase() + flavorString.substring(1).toLowerCase();
-
-        String priceString = String.format(Locale.US, "$%.2f", price * 0.01);
-
-        return "Order " + number + ": " + flavorString + ", " + priceString;
     }
 
     private static Flavor getFlavor(short order) {
@@ -57,7 +43,7 @@ public class Order {
     }
 
     private static int getPrice(Flavor flavor, Queue<Integer> toppings) {
-        int iceCreamCount = flavor != Flavor.NONE ? 1 : 0;
+        int iceCreamCount = flavor != null ? 1 : 0;
         return Math.max(toppings.size() - iceCreamCount, 0) * toppingPrice + iceCreamCount * iceCreamPrice;
     }
 }

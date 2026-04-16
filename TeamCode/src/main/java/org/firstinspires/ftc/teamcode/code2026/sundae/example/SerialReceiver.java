@@ -4,7 +4,6 @@ import android.content.Context;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 
-import com.bylazar.telemetry.TelemetryManager;
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
@@ -14,6 +13,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -23,23 +23,23 @@ public class SerialReceiver {
     // Vanilla = 2, Chocolate = 1, Strawberry = 0
     // M&Ms = 9, Froot = 8, Brownie = 3, Sprinkles = 6, Choc sauce = 4, Caramel = 5, Cream = 7
     private final int serialTimeout = 20, usbRetryInterval = 100; // Milliseconds
-    private final Context context;
+    Context context;
     private UsbSerialPort port;
-    private final Telemetry telemetry;
+    private Telemetry telemetry;
     private final Queue<Byte> accumulator = new LinkedList<>();
     private final int packetLength = 4;
     private final byte header = 0x7E;
     private final boolean debug;
-    private final ElapsedTime usbRetry;
-    SerialReceiver(OpMode opMode, boolean debug) {
-        this.telemetry = opMode.telemetry;
+    private ElapsedTime usbRetry;
+    public SerialReceiver(OpMode opMode, boolean debug) {
+        telemetry = opMode.telemetry;
         this.debug = debug;
         context = opMode.hardwareMap.appContext;
         usbRetry = new ElapsedTime();
         connectUSB();
     }
 
-    short tryGetOrder() { // Returns 0 if no order received
+    public short tryGetOrder() { // Returns 0 if no order received
         // Returns a 16-bit value, the 3 LSBs are the flavors, the next 7 are toppings
         short order = 0;
         byte[] buffer = new byte[packetLength]; // More buffer than the rock
