@@ -29,7 +29,7 @@ public abstract class DispenserInterface {
         motor.setPower(1);
         sleep(1000);
         while(motor.isBusy() && dispenserOpMode.opModeIsActive()){}
-        sleep(400);
+        sleep(200);
     }
     public void Calibrate(){
         double position = motor.getCurrentPosition();

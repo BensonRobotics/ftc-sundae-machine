@@ -1,4 +1,6 @@
-package org.firstinspires.ftc.teamcode.code2026.sundae.example;
+package org.firstinspires.ftc.teamcode.code2026.sundae;
+
+import org.firstinspires.ftc.teamcode.code2026.sundae.example.Flavor;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -13,12 +15,12 @@ public class Order {
     public final Flavor flavor;
     final int price;
 
+
     public Order(short order) {
         toppings = getToppings(order);
         flavor = getFlavor(order);
         price = getPrice(flavor, toppings);
     }
-
     private static Flavor getFlavor(short order) {
         Flavor flavor = Flavor.NONE;
         for (int i = 0; i < numFlavors; i++) {
@@ -47,3 +49,4 @@ public class Order {
         return Math.max(toppings.size() - iceCreamCount, 0) * toppingPrice + iceCreamCount * iceCreamPrice;
     }
 }
+

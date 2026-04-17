@@ -11,7 +11,7 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.code2026.sundae.example.Flavor;
-import org.firstinspires.ftc.teamcode.code2026.sundae.example.Order;
+import org.firstinspires.ftc.teamcode.code2026.sundae.Order;
 import org.firstinspires.ftc.teamcode.code2026.sundae.example.SerialReceiver;
 import org.firstinspires.ftc.teamcode.dispenser.BrownieBits;
 import org.firstinspires.ftc.teamcode.dispenser.Caramel;
@@ -34,15 +34,8 @@ import java.util.Queue;
 
 @TeleOp
 public class IceCream2026 extends LinearOpMode {
-    public Queue<Flavor> flavorQueue;
-    public Queue<DispenserInterface> toppingQueue;
-    public Queue<Integer> toppingQueueAmounts;
-    public Queue<SauceInterface> sauceQueue;
-    public Queue<Integer> sauceQueueAmounts;
-    public Queue<CreamInterface> creamQueue;
-    public Queue<Integer> creamQueueAmounts;
-    public Deque<Integer> orderNumbersQueue;
-    public Queue<Double> priceQueue;
+
+    public Queue<ReadableOrderReturn> orders;
     public DcMotorEx driveMotor;
     private final DigitalChannel[] operatorButtons = new DigitalChannel[3];
     private final DigitalChannel[] operatorLEDs = new DigitalChannel[3];
@@ -53,10 +46,8 @@ public class IceCream2026 extends LinearOpMode {
     private DigitalChannel maxEndStop;
     private IceCreamStatus status;
     private SerialReceiver serialReceiver;
-    private Order order;
-    private List<SauceInterface> sauceMap;
-    private List<DispenserInterface> toppingMap;
-    private List<CreamInterface> creamMap;
+    private SaveManager saveManager;
+
     int orderCount = 0;
     TelemetryManager panelsTelemetry;
 
@@ -66,9 +57,23 @@ public class IceCream2026 extends LinearOpMode {
         debounceTimer.reset();
         driveMotor = hardwareMap.get(DcMotorEx.class, "conveyorMotor");
         panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
+        OrderCollection orderCollection = saveManager.Read();
+        if(orderCollection.successful){
+            if(orders != null){
+                orders.addAll(orderCollection.orders);
+                orderCount = orderCollection.orderAmount;
+                panelsTelemetry.addLine("Successfully restored backup!");
+            }
+            else{
+                panelsTelemetry.addLine("Unable to restore backup: save file empty");
+            }
+
+        }
+        else{
+            panelsTelemetry.addLine("Unable to restore backup: no backup");
+        }
         waitForStart();
         serialReceiver = new SerialReceiver(this, true);
-        panelsTelemetry.addData("DriveMotor pos", driveMotor.getCurrentPosition());
         for (int i = 0; i < operatorButtons.length && opModeIsActive(); i++) {
             operatorButtons[i] = hardwareMap.get(DigitalChannel.class, operatorButtonNames[i]);
             operatorButtons[i].setMode(DigitalChannel.Mode.INPUT);
@@ -93,45 +98,23 @@ public class IceCream2026 extends LinearOpMode {
                 receivedOrder = serialReceiver.tryGetOrder();
             }
             else{
-                List<DispenserInterface> toppings = new ArrayList<>();
-                List<SauceInterface> sauces = new ArrayList<>();
-                List<CreamInterface> creams = new ArrayList<>();
-                Flavor flavor;
-                    order = new Order(receivedOrder);
-                    List<Integer> incomingToppings = new ArrayList<>(order.toppings);
-                    for (int i = 0; i < incomingToppings.size() && opModeIsActive(); i++) {
-                        if (incomingToppings.get(i) == 0 || incomingToppings.get(i) == 1) {
-                            sauces.add(sauceMap.get(incomingToppings.get(i)));
-                        } else if (incomingToppings.get(i) == 6) {
 
-                            creams.add(creamMap.get(incomingToppings.get(i) - 6));
-                        } else {
-                            toppings.add(toppingMap.get(incomingToppings.get(i) - 2));
-                        }
-                    }
-                    flavor = order.flavor;
+                Order order = new Order(receivedOrder);
+                List<Integer> incomingToppings = new ArrayList<>(order.toppings);
+                orderCount++;
+                ReadableOrderReturn parsedOrder = new ReadableOrderReturn(order.flavor, incomingToppings, orderCount, hardwareMap, this);
                 receivedOrder = 0;
-                QueueFlavor(flavor, toppings, sauces, creams);
-
+                orders.add(parsedOrder);
+                OrderCollection collection = new OrderCollection();
+                collection.orders = new ArrayList<>(orders);
+                collection.orderAmount=orderCount;
+                saveManager.Save(collection);
             }
-            List<Flavor> flavorList = new ArrayList<>(flavorQueue);
-            List<Double> priceList = new ArrayList<>(priceQueue);
-            List<Integer> orderList = new ArrayList<>(orderNumbersQueue);
-            if(flavorList.size() > 0){
-                if(status == IceCreamStatus.WaitingForDispense){
-                    panelsTelemetry.addLine("==>Load flavor " + flavorList.get(0) + " <==");
-                    panelsTelemetry.addLine("==>Price " + priceList.get(0) + "0$ <==");
-                    panelsTelemetry.addLine("==>Order : Next<==");
-                }
-                else{
-                    panelsTelemetry.addLine("==>Prepare flavor " + flavorList.get(0) + " <==");
-                    panelsTelemetry.addLine("==>Price " + priceList.get(0) + "0$ <==");
-                    panelsTelemetry.addLine("==>Order : Next<==");
-                }
-                for(int i = 1; i < flavorList.size() && opModeIsActive(); i++){
-                    panelsTelemetry.addData("Prepare Flavor ",flavorList.get(i));
-                    panelsTelemetry.addLine("Price " + priceList.get(i) + "0$");
-                    panelsTelemetry.addLine("Order : #" + orderList.get(i));
+            List<ReadableOrderReturn> orderList = new ArrayList<>(orders);
+            if(!orders.isEmpty()){
+                panelsTelemetry.addLine("==> Order #" + orderList.get(0).orderNum + " <== \n==> Flavor " + orderList.get(0).flavor + " <== \n==> Price $" + orderList.get(0).price + "0 <==");
+                for(int i = 1; i < orderList.size() && opModeIsActive(); i++){
+                    panelsTelemetry.addLine("Order #" + orderList.get(i).orderNum + "\nFlavor " + orderList.get(i).flavor + "\nPrice $" + orderList.get(i).price + "0");
                 }
             }
 
@@ -158,13 +141,7 @@ public class IceCream2026 extends LinearOpMode {
                 driveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
                 driveMotor.setPower(-1);
             }
-            if(status == IceCreamStatus.WaitingForDispense && !flavorQueue.isEmpty()){
-                operatorLEDs[0].setState(false);
-            }
-            else{
-                operatorLEDs[0].setState(true);
-
-            }
+            operatorLEDs[0].setState(status != IceCreamStatus.WaitingForDispense || orders.isEmpty());
             operatorLEDs[1].setState(false);
             panelsTelemetry.update(telemetry);
         }
@@ -173,7 +150,7 @@ public class IceCream2026 extends LinearOpMode {
     public void operatorAction(int button) {
         switch (button) {
             case 0: // Start header
-                if(status == IceCreamStatus.WaitingForDispense && !flavorQueue.isEmpty()){
+                if(status == IceCreamStatus.WaitingForDispense && !orders.isEmpty()){
                     startCycle();
                 }
                 break;
@@ -181,13 +158,6 @@ public class IceCream2026 extends LinearOpMode {
                 operatorLEDs[0].setState(true);
                 operatorLEDs[1].setState(true);
                 operatorLEDs[2].setState(true);
-//                for(int i = 0; i < sauceMap.size(); i++){
-//                    sauceMap.get(i).CloseValve();
-//                    while(sauceMap.get(i).motor.isBusy()){}
-//                }
-//                for(int i = 0; i < creamMap.size(); i++){
-//                    creamMap.get(i).CloseValve();
-//                }
                 requestOpModeStop();
                 break;
             case 2: // Reset header
@@ -210,91 +180,66 @@ public class IceCream2026 extends LinearOpMode {
         operatorLEDs[2].setState(true);
         operatorLEDs[0].setState(true);
         status = IceCreamStatus.Resetting;
-        flavorQueue = new LinkedList<>();
-        toppingQueue = new LinkedList<>();
-        sauceQueue = new LinkedList<>();
-        sauceQueueAmounts = new LinkedList<>();
-        toppingQueueAmounts = new LinkedList<>();
-        priceQueue = new LinkedList<>();
-        creamQueue = new LinkedList<>();
-        creamQueueAmounts = new LinkedList<>();
-        orderNumbersQueue = new LinkedList<>();
+        saveManager.Clear();
         driveMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         driveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         driveMotor.setPower(-1);
-        sauceMap = List.of(
-                new Caramel(hardwareMap, this),
-                new Chocolate(hardwareMap, this)
-        );
-        toppingMap = List.of(
-                new Sprinkles(hardwareMap, this),
-                new FrootLoops(hardwareMap, this),
-                new MM(hardwareMap, this),
-                new BrownieBits(hardwareMap, this)
-        );
-        creamMap = List.of(
-                new WhippedCream(hardwareMap)
-        );
 
 
     }
 
     public void MoveForward() {
-        Flavor flavor = flavorQueue.remove();
-        priceQueue.remove();
-        if (sauceQueue != null && !sauceQueue.isEmpty()) {
-            int amountToMoveInSauces = sauceQueueAmounts.remove();
+        ReadableOrderReturn order = orders.remove();
+        if (order.sauces != null && !order.sauces.isEmpty()) {
+            int amountToMoveInSauces = order.sauces.size();
             for (int i = 0; i < amountToMoveInSauces && opModeIsActive(); i++) {
-
-                if(sauceQueue.peek() != null){
-                    driveMotor.setTargetPosition(sauceQueue.peek().tickAmount);
+                    SauceInterface sauce = order.sauces.remove();
+                    driveMotor.setTargetPosition(sauce.tickAmount);
                     driveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     driveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
                     driveMotor.setPower(1);
                     status = IceCreamStatus.Moving;
-                    while (Math.abs(driveMotor.getCurrentPosition() - driveMotor.getTargetPosition()) > 2 && opModeIsActive()) {
+                    while (driveMotor.isBusy() && opModeIsActive()) {
                     }
                     status = IceCreamStatus.Dispensing;
                     driveMotor.setPower(0);
-                    DispenseTopping(DispenserTypes.Sauce);
-                }
+
+                    sauce.Dispense(1000);
 
             }
         }
-        if (toppingQueue != null && !toppingQueue.isEmpty()) {
-            int amountToMoveInToppings = toppingQueueAmounts.remove();
+        if (order.toppings != null && !order.toppings.isEmpty()) {
+            int amountToMoveInToppings = order.toppings.size();
 
             for (int i = 0; i < amountToMoveInToppings && opModeIsActive(); i++) {
-                if(toppingQueue.peek() != null){
-                    driveMotor.setTargetPosition(toppingQueue.peek().tickAmount);
+                DispenserInterface topping = order.toppings.remove();
+                    driveMotor.setTargetPosition(topping.tickAmount);
                     driveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     driveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
                     driveMotor.setPower(1);
                     status = IceCreamStatus.Moving;
-                    while (Math.abs(driveMotor.getCurrentPosition() - driveMotor.getTargetPosition()) > 2 && opModeIsActive()) {
+                    while (driveMotor.isBusy() && opModeIsActive()) {
                     }
                     status = IceCreamStatus.Dispensing;
                     driveMotor.setPower(0);
-                    DispenseTopping(DispenserTypes.Topping);
-                }
-
+                    topping.Dispense(2);
             }
         }
-        if(creamQueue != null && !creamQueue.isEmpty()){
-            int amountToMoveInCream = creamQueueAmounts.remove();
+        if(order.creams != null && !order.creams.isEmpty()){
+            int amountToMoveInCream = order.creams.size();
             for(int i = 0; i < amountToMoveInCream && opModeIsActive(); i++){
-                if(creamQueue.peek() != null){
-                    driveMotor.setTargetPosition(creamQueue.peek().tickAmount);
+                CreamInterface cream = order.creams.remove();
+                    driveMotor.setTargetPosition(cream.tickAmount);
                     driveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     driveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
                     driveMotor.setPower(1);
                     status = IceCreamStatus.Moving;
-                    while (Math.abs(driveMotor.getCurrentPosition() - driveMotor.getTargetPosition()) > 2 && opModeIsActive()) {
+                    while (driveMotor.isBusy() && opModeIsActive()) {
                     }
                     status = IceCreamStatus.Dispensing;
                     driveMotor.setPower(0);
-                    DispenseTopping(DispenserTypes.Cream);
-                }
+                    cream.Dispense(600);
+
 
             }
         }
@@ -306,68 +251,6 @@ public class IceCream2026 extends LinearOpMode {
 
     }
 
-    public void DispenseTopping(DispenserTypes type) {
-        if (type == DispenserTypes.Topping) {
-
-            DispenserInterface topping = toppingQueue.remove();
-            driveMotor.setTargetPosition((int) (driveMotor.getCurrentPosition() + topping.tickAmount));
-            topping.Dispense(2);
-        } else if (type == DispenserTypes.Sauce) {
-            SauceInterface topping = sauceQueue.remove();
-            driveMotor.setTargetPosition((int) (driveMotor.getCurrentPosition() + topping.tickAmount));
-            topping.Dispense(1000);
-        } else if (type == DispenserTypes.Cream) {
-            CreamInterface topping = creamQueue.remove();
-            driveMotor.setTargetPosition((int) (driveMotor.getCurrentPosition() + topping.tickAmount));
-            topping.Dispense(600);
-        }
-    }
-
-    public void QueueFlavor(Flavor flavor, List<DispenserInterface> toppings, List<SauceInterface> sauces, List<CreamInterface> creams) {
-
-        double price = 0.00;
-        int totalToppings = toppings.size() + sauces.size() + creams.size();
-
-        int freeToppingsAmount = 0;
-        if(flavor != Flavor.NONE){
-            freeToppingsAmount = 1;
-            price += 3.00;
-        }
-        if (sauces != null && !sauces.isEmpty()) {
-            sauceQueue.addAll(sauces);
-            sauceQueueAmounts.add(sauceQueue.size());
-            if(totalToppings > freeToppingsAmount){
-                for(int i = 0; i < sauces.size() && opModeIsActive();i++){
-                    price += sauces.get(i).price;
-                }
-            }
-
-        }
-        if (toppings != null && !toppings.isEmpty()) {
-            toppingQueue.addAll(toppings);
-            toppingQueueAmounts.add(toppingQueue.size());
-            if(totalToppings > freeToppingsAmount) {
-                for (int i = 0; i < toppings.size() && opModeIsActive(); i++) {
-                    price += toppings.get(i).price;
-                }
-            }
-        }
-        if(creams != null && !creams.isEmpty()){
-            creamQueue.addAll(creams);
-            creamQueueAmounts.add(creamQueue.size());
-            if(totalToppings > freeToppingsAmount) {
-                for (int i = 0; i < creams.size() &&opModeIsActive(); i++) {
-                    price += creams.get(i).price;
-                }
-            }
-        }
-            orderCount++;
-            orderNumbersQueue.add(orderCount);
-
-        priceQueue.add(price);
-        flavorQueue.add(flavor);
-        telemetry.update();
-    }
 }
 
 

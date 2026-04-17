@@ -34,7 +34,7 @@ public abstract class SauceInterface {
         motor.setPower(1);
         ElapsedTime runtime = new ElapsedTime();
         runtime.reset();
-        while ((runtime.seconds() < 3 && motor.isBusy()) && dispenserOpMode.opModeIsActive()) {
+        while ((runtime.seconds() < 2 && motor.isBusy()) && dispenserOpMode.opModeIsActive()) {
         }
         motor.setPower(0);
         motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);

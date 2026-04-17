@@ -25,7 +25,7 @@ public class Sprinkles extends DispenserInterface {
 
     @Override
     public void Dispense(int slots) {
-        super.Dispense(slots);
+        super.Dispense(slots - 1);
     }
 
 }
