@@ -2,12 +2,13 @@ package org.firstinspires.ftc.teamcode.code2026.sundae.example;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-@Autonomous
+@TeleOp
 public class SerialTest extends OpMode {
     SerialReceiver serial;
     int orderCount;
-    Order lastOrder = new Order((short)0);
+    Order lastOrder;
 
     @Override
     public void init() {
@@ -19,11 +20,13 @@ public class SerialTest extends OpMode {
         short order = serial.tryGetOrder();
         if (order != 0) {
             orderCount++;
-            lastOrder = new Order(order);
+            lastOrder = new Order(order, 0);
         }
-        telemetry.addData("Flavor", lastOrder.flavor);
-        telemetry.addData("Toppings", lastOrder.toppings);
-        telemetry.addData("Received", orderCount);
+        if (lastOrder != null) {
+            telemetry.addData("Flavor", lastOrder.flavor);
+            telemetry.addData("Toppings", lastOrder.toppings);
+            telemetry.addData("Received", orderCount);
+        }
     }
 
     @Override

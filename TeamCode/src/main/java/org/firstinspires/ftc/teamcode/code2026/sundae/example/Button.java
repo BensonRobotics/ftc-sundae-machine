@@ -39,15 +39,11 @@ public class Button {
     public void update() {
         switch (lightMode) {
             case ON:
-                if (light.getState()) {
-                    light.setState(false);
-                }
+                light.setState(false);
                 break;
 
             case OFF:
-                if (!light.getState()) {
-                    light.setState(true);
-                }
+                light.setState(true);
                 break;
 
             case BLINK:
