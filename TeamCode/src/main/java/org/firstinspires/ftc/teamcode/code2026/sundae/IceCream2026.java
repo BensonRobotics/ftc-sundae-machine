@@ -26,6 +26,7 @@ import org.firstinspires.ftc.teamcode.dispenser.Sprinkles;
 import org.firstinspires.ftc.teamcode.dispenser.WhippedCream;
 
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -40,6 +41,7 @@ public class IceCream2026 extends LinearOpMode {
     public Queue<Integer> sauceQueueAmounts;
     public Queue<CreamInterface> creamQueue;
     public Queue<Integer> creamQueueAmounts;
+    public Deque<Integer> orderNumbersQueue;
     public Queue<Double> priceQueue;
     public DcMotorEx driveMotor;
     private final DigitalChannel[] operatorButtons = new DigitalChannel[3];
@@ -55,6 +57,7 @@ public class IceCream2026 extends LinearOpMode {
     private List<SauceInterface> sauceMap;
     private List<DispenserInterface> toppingMap;
     private List<CreamInterface> creamMap;
+    int orderCount = 0;
     TelemetryManager panelsTelemetry;
 
     private short receivedOrder;
@@ -66,11 +69,11 @@ public class IceCream2026 extends LinearOpMode {
         waitForStart();
         serialReceiver = new SerialReceiver(this, true);
         panelsTelemetry.addData("DriveMotor pos", driveMotor.getCurrentPosition());
-        for (int i = 0; i < operatorButtons.length; i++) {
+        for (int i = 0; i < operatorButtons.length && opModeIsActive(); i++) {
             operatorButtons[i] = hardwareMap.get(DigitalChannel.class, operatorButtonNames[i]);
             operatorButtons[i].setMode(DigitalChannel.Mode.INPUT);
         }
-        for (int i = 0; i < operatorLEDs.length; i++) {
+        for (int i = 0; i < operatorLEDs.length && opModeIsActive(); i++) {
             operatorLEDs[i] = hardwareMap.get(DigitalChannel.class, operatorButtonNames[i] + "led");
             operatorLEDs[i].setMode(DigitalChannel.Mode.OUTPUT);
 
@@ -96,7 +99,7 @@ public class IceCream2026 extends LinearOpMode {
                 Flavor flavor;
                     order = new Order(receivedOrder);
                     List<Integer> incomingToppings = new ArrayList<>(order.toppings);
-                    for (int i = 0; i < incomingToppings.size(); i++) {
+                    for (int i = 0; i < incomingToppings.size() && opModeIsActive(); i++) {
                         if (incomingToppings.get(i) == 0 || incomingToppings.get(i) == 1) {
                             sauces.add(sauceMap.get(incomingToppings.get(i)));
                         } else if (incomingToppings.get(i) == 6) {
@@ -113,22 +116,26 @@ public class IceCream2026 extends LinearOpMode {
             }
             List<Flavor> flavorList = new ArrayList<>(flavorQueue);
             List<Double> priceList = new ArrayList<>(priceQueue);
+            List<Integer> orderList = new ArrayList<>(orderNumbersQueue);
             if(flavorList.size() > 0){
                 if(status == IceCreamStatus.WaitingForDispense){
                     panelsTelemetry.addLine("==>Load flavor " + flavorList.get(0) + " <==");
-                    panelsTelemetry.addLine("==>Price " + priceList.get(0) + " <==");
+                    panelsTelemetry.addLine("==>Price " + priceList.get(0) + "0$ <==");
+                    panelsTelemetry.addLine("==>Order : Next<==");
                 }
                 else{
                     panelsTelemetry.addLine("==>Prepare flavor " + flavorList.get(0) + " <==");
-                    panelsTelemetry.addLine("==>Price " + priceList.get(0) + " <==");
+                    panelsTelemetry.addLine("==>Price " + priceList.get(0) + "0$ <==");
+                    panelsTelemetry.addLine("==>Order : Next<==");
                 }
-                for(int i = 1; i < flavorList.size(); i++){
+                for(int i = 1; i < flavorList.size() && opModeIsActive(); i++){
                     panelsTelemetry.addData("Prepare Flavor ",flavorList.get(i));
-                    panelsTelemetry.addData("Price ", priceList.get(i));
+                    panelsTelemetry.addLine("Price " + priceList.get(i) + "0$");
+                    panelsTelemetry.addLine("Order : #" + orderList.get(i));
                 }
             }
 
-            for (int i = 0; i < operatorButtons.length; i++) {
+            for (int i = 0; i < operatorButtons.length && opModeIsActive(); i++) {
                 if (!operatorButtons[i].getState()) {
                     if (!lastButtonStates[i] && debounceTimer.milliseconds() > 100) {
                         lastButtonStates[i] = true;
@@ -158,9 +165,7 @@ public class IceCream2026 extends LinearOpMode {
                 operatorLEDs[0].setState(true);
 
             }
-            if(status != IceCreamStatus.WaitingForDispense){
-                operatorLEDs[1].setState(false);
-            }
+            operatorLEDs[1].setState(false);
             panelsTelemetry.update(telemetry);
         }
     }
@@ -176,13 +181,13 @@ public class IceCream2026 extends LinearOpMode {
                 operatorLEDs[0].setState(true);
                 operatorLEDs[1].setState(true);
                 operatorLEDs[2].setState(true);
-                for(int i = 0; i < sauceMap.size(); i++){
-                    sauceMap.get(i).CloseValve();
-                    while(sauceMap.get(i).motor.isBusy()){}
-                }
-                for(int i = 0; i < creamMap.size(); i++){
-                    creamMap.get(i).CloseValve();
-                }
+//                for(int i = 0; i < sauceMap.size(); i++){
+//                    sauceMap.get(i).CloseValve();
+//                    while(sauceMap.get(i).motor.isBusy()){}
+//                }
+//                for(int i = 0; i < creamMap.size(); i++){
+//                    creamMap.get(i).CloseValve();
+//                }
                 requestOpModeStop();
                 break;
             case 2: // Reset header
@@ -213,6 +218,7 @@ public class IceCream2026 extends LinearOpMode {
         priceQueue = new LinkedList<>();
         creamQueue = new LinkedList<>();
         creamQueueAmounts = new LinkedList<>();
+        orderNumbersQueue = new LinkedList<>();
         driveMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         driveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         driveMotor.setPower(-1);
@@ -221,10 +227,10 @@ public class IceCream2026 extends LinearOpMode {
                 new Chocolate(hardwareMap, this)
         );
         toppingMap = List.of(
-                new Sprinkles(hardwareMap),
-                new FrootLoops(hardwareMap),
-                new MM(hardwareMap),
-                new BrownieBits(hardwareMap)
+                new Sprinkles(hardwareMap, this),
+                new FrootLoops(hardwareMap, this),
+                new MM(hardwareMap, this),
+                new BrownieBits(hardwareMap, this)
         );
         creamMap = List.of(
                 new WhippedCream(hardwareMap)
@@ -238,7 +244,7 @@ public class IceCream2026 extends LinearOpMode {
         priceQueue.remove();
         if (sauceQueue != null && !sauceQueue.isEmpty()) {
             int amountToMoveInSauces = sauceQueueAmounts.remove();
-            for (int i = 0; i < amountToMoveInSauces; i++) {
+            for (int i = 0; i < amountToMoveInSauces && opModeIsActive(); i++) {
 
                 if(sauceQueue.peek() != null){
                     driveMotor.setTargetPosition(sauceQueue.peek().tickAmount);
@@ -258,7 +264,7 @@ public class IceCream2026 extends LinearOpMode {
         if (toppingQueue != null && !toppingQueue.isEmpty()) {
             int amountToMoveInToppings = toppingQueueAmounts.remove();
 
-            for (int i = 0; i < amountToMoveInToppings; i++) {
+            for (int i = 0; i < amountToMoveInToppings && opModeIsActive(); i++) {
                 if(toppingQueue.peek() != null){
                     driveMotor.setTargetPosition(toppingQueue.peek().tickAmount);
                     driveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -276,7 +282,7 @@ public class IceCream2026 extends LinearOpMode {
         }
         if(creamQueue != null && !creamQueue.isEmpty()){
             int amountToMoveInCream = creamQueueAmounts.remove();
-            for(int i = 0; i < amountToMoveInCream; i++){
+            for(int i = 0; i < amountToMoveInCream && opModeIsActive(); i++){
                 if(creamQueue.peek() != null){
                     driveMotor.setTargetPosition(creamQueue.peek().tickAmount);
                     driveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -305,11 +311,11 @@ public class IceCream2026 extends LinearOpMode {
 
             DispenserInterface topping = toppingQueue.remove();
             driveMotor.setTargetPosition((int) (driveMotor.getCurrentPosition() + topping.tickAmount));
-            topping.Dispense(1);
+            topping.Dispense(2);
         } else if (type == DispenserTypes.Sauce) {
             SauceInterface topping = sauceQueue.remove();
             driveMotor.setTargetPosition((int) (driveMotor.getCurrentPosition() + topping.tickAmount));
-            topping.Dispense(100);
+            topping.Dispense(1000);
         } else if (type == DispenserTypes.Cream) {
             CreamInterface topping = creamQueue.remove();
             driveMotor.setTargetPosition((int) (driveMotor.getCurrentPosition() + topping.tickAmount));
@@ -331,7 +337,7 @@ public class IceCream2026 extends LinearOpMode {
             sauceQueue.addAll(sauces);
             sauceQueueAmounts.add(sauceQueue.size());
             if(totalToppings > freeToppingsAmount){
-                for(int i = 0; i < sauces.size();i++){
+                for(int i = 0; i < sauces.size() && opModeIsActive();i++){
                     price += sauces.get(i).price;
                 }
             }
@@ -341,7 +347,7 @@ public class IceCream2026 extends LinearOpMode {
             toppingQueue.addAll(toppings);
             toppingQueueAmounts.add(toppingQueue.size());
             if(totalToppings > freeToppingsAmount) {
-                for (int i = 0; i < toppings.size(); i++) {
+                for (int i = 0; i < toppings.size() && opModeIsActive(); i++) {
                     price += toppings.get(i).price;
                 }
             }
@@ -350,11 +356,14 @@ public class IceCream2026 extends LinearOpMode {
             creamQueue.addAll(creams);
             creamQueueAmounts.add(creamQueue.size());
             if(totalToppings > freeToppingsAmount) {
-                for (int i = 0; i < creams.size(); i++) {
+                for (int i = 0; i < creams.size() &&opModeIsActive(); i++) {
                     price += creams.get(i).price;
                 }
             }
         }
+            orderCount++;
+            orderNumbersQueue.add(orderCount);
+
         priceQueue.add(price);
         flavorQueue.add(flavor);
         telemetry.update();

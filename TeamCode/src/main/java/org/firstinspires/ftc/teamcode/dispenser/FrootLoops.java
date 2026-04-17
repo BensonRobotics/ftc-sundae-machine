@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.dispenser;
 
 import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
 
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -10,12 +11,12 @@ import java.lang.reflect.Constructor;
 
 public class FrootLoops extends DispenserInterface {
     //Initialize Values
-    public FrootLoops(HardwareMap hardwareMap){
+    public FrootLoops(HardwareMap hardwareMap, LinearOpMode inputDispenserOpMode){
         price = 0.5f;
         motorIdx = 4;
         tickAmount = 6745;
         SetMotor(hardwareMap.get(DcMotorEx.class, "frootMotor"));
-
+        dispenserOpMode = inputDispenserOpMode;
     }
     @Override
     public DcMotorEx GetMotor(){

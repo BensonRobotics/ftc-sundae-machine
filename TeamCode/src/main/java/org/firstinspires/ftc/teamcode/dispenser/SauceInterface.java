@@ -18,7 +18,7 @@ public abstract class SauceInterface {
     public static LinearOpMode dispenserOpMode;
     public int tickAmount;
     public void Dispense(int length){
-        int position = -5;
+        int position = -8;
         int amountToSpin = Math.toIntExact(Math.round(tpd));
         motor.setTargetPosition(amountToSpin);
         motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -32,12 +32,15 @@ public abstract class SauceInterface {
         motor.setTargetPosition(position);
         motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motor.setPower(1);
-
-        while ((motor.isBusy()) && dispenserOpMode.opModeIsActive()) {
+        ElapsedTime runtime = new ElapsedTime();
+        runtime.reset();
+        while ((runtime.seconds() < 3 && motor.isBusy()) && dispenserOpMode.opModeIsActive()) {
         }
         motor.setPower(0);
+        motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        sleep(100);
+
+        sleep(400);
     }
     public void CloseValve(){
         motor.setTargetPosition(-8);

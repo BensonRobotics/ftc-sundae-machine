@@ -24,7 +24,7 @@ public class Caramel extends SauceInterface{
 
     @Override
     public void Dispense(int length) {
-        super.Dispense(length);
+        super.Dispense(length - 900);
     }
 
     @Override
