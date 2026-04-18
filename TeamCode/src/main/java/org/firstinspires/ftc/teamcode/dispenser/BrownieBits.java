@@ -25,7 +25,7 @@ public class BrownieBits extends DispenserInterface {
 
     @Override
     public void Dispense(int slots) {
-        super.Dispense(slots + 1);
+        super.Dispense(slots + 2);
     }
 
 }

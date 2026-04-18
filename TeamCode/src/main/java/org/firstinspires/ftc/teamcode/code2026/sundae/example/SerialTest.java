@@ -20,7 +20,7 @@ public class SerialTest extends OpMode {
         short order = serial.tryGetOrder();
         if (order != 0) {
             orderCount++;
-            lastOrder = new Order(order, 0);
+            //lastOrder = new Order(order, 0);
         }
         if (lastOrder != null) {
             telemetry.addData("Flavor", lastOrder.flavor);

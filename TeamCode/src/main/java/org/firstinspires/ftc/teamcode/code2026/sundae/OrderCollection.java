@@ -4,6 +4,7 @@ import java.util.List;
 
 public class OrderCollection {
     public int orderAmount;
-    public List<ReadableOrderReturn> orders;
+    public List<Order> orders;
     public boolean successful = false;
+    public double money;
 }

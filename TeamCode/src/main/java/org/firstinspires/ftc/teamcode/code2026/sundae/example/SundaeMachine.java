@@ -85,7 +85,7 @@ public class SundaeMachine extends OpMode {
         if (!queueString.isEmpty()) {
             Type type = new TypeToken<LinkedList<Order>>(){}.getType();
             orderQueue = gson.fromJson(queueString, type);
-            orderTally = orderQueue.peek().number;
+            //orderTally = orderQueue.peek().number;
         }
     }
 
@@ -97,7 +97,8 @@ public class SundaeMachine extends OpMode {
         resetButton.update();
 
         short orderData = serialReceiver.tryGetOrder();
-        if (orderData != 0) { orderQueue.add(new Order(orderData, orderTally++)); }
+
+        //if (orderData != 0) { orderQueue.add(new Order(orderData, orderTally++)); }
 
         if (lastQueueLength != orderQueue.size()) {
             String queueString = gson.toJson(orderQueue);

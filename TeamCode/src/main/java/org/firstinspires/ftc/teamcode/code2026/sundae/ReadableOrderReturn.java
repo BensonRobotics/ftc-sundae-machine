@@ -17,6 +17,7 @@ import org.firstinspires.ftc.teamcode.dispenser.Sprinkles;
 import org.firstinspires.ftc.teamcode.dispenser.WhippedCream;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
@@ -45,6 +46,9 @@ public class ReadableOrderReturn {
         creamMap = List.of(
                 new WhippedCream(hardwareMap)
         );
+        creams = new LinkedList<>();
+        sauces = new LinkedList<>();
+        toppings = new LinkedList<>();
         flavor = flavorIn;
         orderNum = oNumberIn;
         List<Integer> incomingToppings = new ArrayList<>(incomingOrder);

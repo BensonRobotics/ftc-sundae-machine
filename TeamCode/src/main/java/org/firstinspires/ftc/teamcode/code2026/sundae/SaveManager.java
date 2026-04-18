@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.code2026.sundae;
 
+import com.bylazar.telemetry.TelemetryManager;
 import com.google.gson.Gson;
 
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
@@ -17,7 +18,9 @@ public class SaveManager {
 
         try (FileOutputStream outputStream = new FileOutputStream(file)) {
             outputStream.write(json.getBytes());
-        } catch (Exception ignored) {
+        } catch (Exception exception) {
+
+
         }
     }
     public void Clear(){

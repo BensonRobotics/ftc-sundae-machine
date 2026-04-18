@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.code2026.sundae;
 
 
+import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -10,23 +11,12 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.code2026.sundae.example.Flavor;
-import org.firstinspires.ftc.teamcode.code2026.sundae.Order;
 import org.firstinspires.ftc.teamcode.code2026.sundae.example.SerialReceiver;
-import org.firstinspires.ftc.teamcode.dispenser.BrownieBits;
-import org.firstinspires.ftc.teamcode.dispenser.Caramel;
-import org.firstinspires.ftc.teamcode.dispenser.Chocolate;
 import org.firstinspires.ftc.teamcode.dispenser.CreamInterface;
 import org.firstinspires.ftc.teamcode.dispenser.DispenserInterface;
-import org.firstinspires.ftc.teamcode.dispenser.DispenserTypes;
-import org.firstinspires.ftc.teamcode.dispenser.FrootLoops;
-import org.firstinspires.ftc.teamcode.dispenser.MM;
 import org.firstinspires.ftc.teamcode.dispenser.SauceInterface;
-import org.firstinspires.ftc.teamcode.dispenser.Sprinkles;
-import org.firstinspires.ftc.teamcode.dispenser.WhippedCream;
 
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -36,6 +26,7 @@ import java.util.Queue;
 public class IceCream2026 extends LinearOpMode {
 
     public Queue<ReadableOrderReturn> orders;
+    public Queue<Order> savableOrders;
     public DcMotorEx driveMotor;
     private final DigitalChannel[] operatorButtons = new DigitalChannel[3];
     private final DigitalChannel[] operatorLEDs = new DigitalChannel[3];
@@ -47,8 +38,9 @@ public class IceCream2026 extends LinearOpMode {
     private IceCreamStatus status;
     private SerialReceiver serialReceiver;
     private SaveManager saveManager;
-
-    int orderCount = 0;
+    private ElapsedTime resetDoubleClick = new ElapsedTime();
+    private double totalMoney;
+    int orderCount;
     TelemetryManager panelsTelemetry;
 
     private short receivedOrder;
@@ -57,11 +49,19 @@ public class IceCream2026 extends LinearOpMode {
         debounceTimer.reset();
         driveMotor = hardwareMap.get(DcMotorEx.class, "conveyorMotor");
         panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
+        saveManager = new SaveManager();
         OrderCollection orderCollection = saveManager.Read();
+        orders = new LinkedList<>();
+        savableOrders = new LinkedList<>();
         if(orderCollection.successful){
-            if(orders != null){
-                orders.addAll(orderCollection.orders);
+            if(orderCollection.orders != null){
+
+                for(int i = 0; i < orderCollection.orders.size(); i++){
+                    orders.add(new ReadableOrderReturn(orderCollection.orders.get(i).flavor, new ArrayList<>(orderCollection.orders.get(i).toppings), (orderCollection.orderAmount - orderCollection.orders.size()) + i + 1, hardwareMap, this));
+                }
+                savableOrders.addAll( orderCollection.orders);
                 orderCount = orderCollection.orderAmount;
+                totalMoney = orderCollection.money;
                 panelsTelemetry.addLine("Successfully restored backup!");
             }
             else{
@@ -73,7 +73,7 @@ public class IceCream2026 extends LinearOpMode {
             panelsTelemetry.addLine("Unable to restore backup: no backup");
         }
         waitForStart();
-        serialReceiver = new SerialReceiver(this, true);
+        serialReceiver = new SerialReceiver(this, false);
         for (int i = 0; i < operatorButtons.length && opModeIsActive(); i++) {
             operatorButtons[i] = hardwareMap.get(DigitalChannel.class, operatorButtonNames[i]);
             operatorButtons[i].setMode(DigitalChannel.Mode.INPUT);
@@ -90,10 +90,15 @@ public class IceCream2026 extends LinearOpMode {
         minEndStop.setMode(DigitalChannel.Mode.INPUT);
         maxEndStop.setMode(DigitalChannel.Mode.INPUT);
 
-        resetSystem();
-
+        //resetSystem();
+        status = IceCreamStatus.Resetting;
+        driveMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        driveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        driveMotor.setPower(-1);
+        resetDoubleClick.reset();
         while (opModeIsActive()) {
             panelsTelemetry.addData("Status", status.toString());
+            panelsTelemetry.addLine("Total money earned : $" + totalMoney + "0");
             if(receivedOrder == 0){
                 receivedOrder = serialReceiver.tryGetOrder();
             }
@@ -105,18 +110,31 @@ public class IceCream2026 extends LinearOpMode {
                 ReadableOrderReturn parsedOrder = new ReadableOrderReturn(order.flavor, incomingToppings, orderCount, hardwareMap, this);
                 receivedOrder = 0;
                 orders.add(parsedOrder);
+                savableOrders.add(order);
                 OrderCollection collection = new OrderCollection();
-                collection.orders = new ArrayList<>(orders);
+                collection.orders = new ArrayList<>(savableOrders);
                 collection.orderAmount=orderCount;
+                collection.money = totalMoney;
                 saveManager.Save(collection);
             }
-            List<ReadableOrderReturn> orderList = new ArrayList<>(orders);
-            if(!orders.isEmpty()){
-                panelsTelemetry.addLine("==> Order #" + orderList.get(0).orderNum + " <== \n==> Flavor " + orderList.get(0).flavor + " <== \n==> Price $" + orderList.get(0).price + "0 <==");
-                for(int i = 1; i < orderList.size() && opModeIsActive(); i++){
-                    panelsTelemetry.addLine("Order #" + orderList.get(i).orderNum + "\nFlavor " + orderList.get(i).flavor + "\nPrice $" + orderList.get(i).price + "0");
+            if(orders != null){
+                List<ReadableOrderReturn> orderList = new ArrayList<>(orders);
+                if(!orders.isEmpty()){
+                    //panelsTelemetry.addLine("==> Order #" + orderList.get(0).orderNum + " <== \n ==> Flavor " + orderList.get(0).flavor + " <== \n ==> Price $" + orderList.get(0).price + "0 <==");
+                    panelsTelemetry.addLine("==> Order #" + orderList.get(0).orderNum + " <==");
+                    panelsTelemetry.addLine("==> Flavor " + orderList.get(0).flavor + " <==");
+                    panelsTelemetry.addLine("==> Price $" + orderList.get(0).price + "0 <==");
+                    panelsTelemetry.addLine("");
+                    for(int i = 1; i < orderList.size() && opModeIsActive(); i++){
+                        panelsTelemetry.addLine("    Order #" + orderList.get(i).orderNum + "    ");
+                        panelsTelemetry.addLine("    Flavor " + orderList.get(i).flavor + "    ");
+                        panelsTelemetry.addLine("    Price $" + orderList.get(i).price + "0    ");
+                        panelsTelemetry.addLine("");
+
+                    }
                 }
             }
+
 
             for (int i = 0; i < operatorButtons.length && opModeIsActive(); i++) {
                 if (!operatorButtons[i].getState()) {
@@ -125,10 +143,12 @@ public class IceCream2026 extends LinearOpMode {
                         operatorAction(i);
                         debounceTimer.reset();
                     }
+
                 } else {
                     lastButtonStates[i] = false;
                 }
             }
+
 
             if (!minEndStop.getState() && status == IceCreamStatus.Resetting) {
                 status = IceCreamStatus.WaitingForDispense;
@@ -161,10 +181,22 @@ public class IceCream2026 extends LinearOpMode {
                 requestOpModeStop();
                 break;
             case 2: // Reset header
-                operatorLEDs[0].setState(true);
-                operatorLEDs[1].setState(false);
-                operatorLEDs[2].setState(true);
-                resetSystem();
+                if(resetDoubleClick.milliseconds() > 1000){
+                    resetDoubleClick.reset();
+                    operatorLEDs[0].setState(true);
+                    operatorLEDs[1].setState(false);
+                    operatorLEDs[2].setState(false);
+                    resetSystem();
+                }
+                else{
+                    resetDoubleClick.reset();
+                    operatorLEDs[0].setState(true);
+                    operatorLEDs[1].setState(false);
+                    operatorLEDs[2].setState(false);
+                    hardResetSystem();
+                    panelsTelemetry.addLine("Hard reset");
+                }
+
                 break;
         }
     }
@@ -174,13 +206,31 @@ public class IceCream2026 extends LinearOpMode {
         operatorLEDs[2].setState(false);
         MoveForward();
     }
-
-    public void resetSystem() {
+    public void hardResetSystem(){
         receivedOrder = 0;
-        operatorLEDs[2].setState(true);
+        operatorLEDs[2].setState(false);
         operatorLEDs[0].setState(true);
         status = IceCreamStatus.Resetting;
         saveManager.Clear();
+        totalMoney = 0;
+        orderCount = 0;
+        savableOrders = new LinkedList<>();
+        orders = new LinkedList<>();
+        driveMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        driveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        driveMotor.setPower(-1);
+    }
+    public void resetSystem() {
+        receivedOrder = 0;
+        operatorLEDs[2].setState(false);
+        operatorLEDs[0].setState(true);
+        status = IceCreamStatus.Resetting;
+        saveManager.Clear();
+        OrderCollection collection = new OrderCollection();
+        collection.orderAmount=orderCount;
+        saveManager.Save(collection);
+        savableOrders = new LinkedList<>();
+        orders = new LinkedList<>();
         driveMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         driveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         driveMotor.setPower(-1);
@@ -248,6 +298,7 @@ public class IceCream2026 extends LinearOpMode {
         driveMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         driveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         driveMotor.setPower(1);
+        totalMoney+= order.price;
 
     }
 
