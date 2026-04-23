@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.code2026.sundae.example;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Queue;
 
 public class Order {
@@ -11,12 +12,23 @@ public class Order {
     static final int numFlavors = 3, numToppings = 7, iceCreamPrice = 300, toppingPrice = 50;
     public final Queue<Integer> toppings;
     public final Flavor flavor;
-    final int price;
+    public final int price, number;
 
-    public Order(short order) {
+    public Order(short order, int number) {
+        this.number = number;
         toppings = getToppings(order);
         flavor = getFlavor(order);
         price = getPrice(flavor, toppings);
+    }
+
+    @Override
+    public String toString() {
+        String flavorString = flavor.toString();
+        flavorString = flavorString.substring(0, 1).toUpperCase() + flavorString.substring(1).toLowerCase();
+
+        String priceString = String.format(Locale.US, "$%.2f", price * 0.01);
+
+        return "Order " + number + ": " + flavorString + ", " + priceString;
     }
 
     private static Flavor getFlavor(short order) {
