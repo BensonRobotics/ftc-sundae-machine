@@ -8,6 +8,7 @@ public class Chocolate extends SauceInterface{
     //actually caramel
     public Chocolate(HardwareMap hardwareMap, LinearOpMode dispenserOpMode){
         SauceInterface.dispenserOpMode = dispenserOpMode;
+        tpd = 120;
         price = 0.5f;
         motorIdx = 2;
         tickAmount = 3715;

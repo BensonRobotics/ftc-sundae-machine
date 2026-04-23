@@ -11,9 +11,10 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 public abstract class SauceInterface {
     public DcMotorEx motor;
+
     public float price;
     public final double tpr = 5281.1;
-    public final double tpd = 80;
+    public double tpd = 80;
     public int motorIdx;
     public static LinearOpMode dispenserOpMode;
     public int tickAmount;
@@ -28,6 +29,7 @@ public abstract class SauceInterface {
         while (motor.isBusy() && dispenserOpMode.opModeIsActive()) {
         }
         motor.setPower(0);
+
         sleep(length);
         motor.setTargetPosition(position);
         motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);

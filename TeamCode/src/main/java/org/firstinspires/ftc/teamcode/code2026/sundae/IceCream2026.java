@@ -115,12 +115,12 @@ public class IceCream2026 extends LinearOpMode {
                 collection.orders = new ArrayList<>(savableOrders);
                 collection.orderAmount=orderCount;
                 collection.money = totalMoney;
+                saveManager.Clear();
                 saveManager.Save(collection);
             }
             if(orders != null){
                 List<ReadableOrderReturn> orderList = new ArrayList<>(orders);
                 if(!orders.isEmpty()){
-                    //panelsTelemetry.addLine("==> Order #" + orderList.get(0).orderNum + " <== \n ==> Flavor " + orderList.get(0).flavor + " <== \n ==> Price $" + orderList.get(0).price + "0 <==");
                     panelsTelemetry.addLine("==> Order #" + orderList.get(0).orderNum + " <==");
                     panelsTelemetry.addLine("==> Flavor " + orderList.get(0).flavor + " <==");
                     panelsTelemetry.addLine("==> Price $" + orderList.get(0).price + "0 <==");

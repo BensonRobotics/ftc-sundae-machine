@@ -9,7 +9,7 @@ public class Caramel extends SauceInterface{
         SauceInterface.dispenserOpMode = dispenserOpMode;
         price = 0.5f;
         motorIdx = 1;
-        tickAmount = 2060;
+        tickAmount = 1960;
         SetMotor(hardwareMap.get(DcMotorEx.class, "chocolateMotor"));
     }
 
