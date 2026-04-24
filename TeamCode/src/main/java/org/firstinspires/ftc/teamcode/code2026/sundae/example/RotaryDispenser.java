@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
-public class RotaryDispenser implements Dispenser {
+public class RotaryDispenser extends Thread implements Dispenser {
     private final DcMotorEx motor;
     private final double tps; // Ticks per dispense
     private final int position, spd;
@@ -22,6 +22,7 @@ public class RotaryDispenser implements Dispenser {
         motor.setTargetPosition(0);
         motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         motor.setPower(1);
+        start();
     }
     @Override
     public void dispense() { slotTally += spd; }
@@ -33,7 +34,7 @@ public class RotaryDispenser implements Dispenser {
     }
 
     @Override
-    public void update() { motor.setTargetPosition((int) (slotTally * tps)); }
+    public void run() { while (true) { motor.setTargetPosition((int) (slotTally * tps)); } }
 
     @Override
     public int getPosition() { return position; }

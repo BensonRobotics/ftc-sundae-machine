@@ -93,11 +93,6 @@ public class SundaeMachine extends OpMode {
 
     @Override
     public void loop() {
-        for (Dispenser dispenser : dispensers) { dispenser.update(); }
-        startButton.update();
-        stopButton.update();
-        resetButton.update();
-
         short orderData = serialReceiver.tryGetOrder();
         if (orderData != 0) { orderQueue.add(new Order(orderData, orderTally++)); }
 

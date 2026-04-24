@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-public class ServoDispenser implements Dispenser {
+public class ServoDispenser extends Thread implements Dispenser {
     private final Servo servo;
     private final ElapsedTime timer;
     private final double dispenseAngle;
@@ -24,13 +24,17 @@ public class ServoDispenser implements Dispenser {
     public void dispense() {
         timer.reset();
         servo.setPosition(dispenseAngle);
+        start();
     }
 
     @Override
     public double getCompletion() { return MathUtils.clamp(timer.milliseconds() / dispenseTime, 0, 1); }
 
     @Override
-    public void update() { if (servo.getPosition() == dispenseAngle && timer.milliseconds() >= dispenseTime) { stopDispensing(); } }
+    public void run() {
+        while (!(servo.getPosition() == dispenseAngle && timer.milliseconds() >= dispenseTime)) { }
+        stopDispensing();
+    }
 
     @Override
     public int getPosition() { return position; }
