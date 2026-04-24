@@ -5,5 +5,4 @@ public interface Dispenser {
     double getCompletion();
     int getPosition();
     void stopDispensing();
-    void update();
 }
