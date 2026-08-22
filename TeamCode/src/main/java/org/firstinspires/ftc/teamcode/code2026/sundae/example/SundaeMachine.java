@@ -49,12 +49,12 @@ public class SundaeMachine extends OpMode {
 
         dispensers = new Dispenser[]{
                 new LiquidDispenser(this, "chocolateMotor", 80, 1000, 2152),
-                new LiquidDispenser(this, "caramelMotor", 80, 1000, 3779),
+                new LiquidDispenser(this, "caramelMotor", 120, 2000, 3779),
                 new RotaryDispenser(this, "sprinkleMotor", 2, 5230),
                 new RotaryDispenser(this, "frootMotor", 2, 6817),
-                new RotaryDispenser(this, "mnmMotor", 2, 8455),
+                new RotaryDispenser(this, "mnmMotor", 1, 8455),
                 new RotaryDispenser(this, "brownieMotor", 2, 10109),
-                new ServoDispenser(this, "creamServo", 0.3, 750, 12039)
+                new ServoDispenser(this, "creamServo", 0.2, 600, 11850)
         };
 
         // If this underlines yellow then you're good
@@ -84,21 +84,17 @@ public class SundaeMachine extends OpMode {
         String queueString = prefs.getString("orderQueue", "");
         if (!queueString.isEmpty()) {
             Type type = new TypeToken<LinkedList<Order>>(){}.getType();
-            orderQueue = gson.fromJson(queueString, type);
-            //orderTally = orderQueue.peek().number;
+            Queue<Order> lastQueue = gson.fromJson(queueString, type);
+            if (lastQueue != null) { orderQueue = new LinkedList<>(lastQueue); }
+            Order lastOrder = orderQueue.peek();
+            if (lastOrder != null) { orderTally = lastOrder.number; }
         }
     }
 
     @Override
     public void loop() {
-        for (Dispenser dispenser : dispensers) { dispenser.update(); }
-        startButton.update();
-        stopButton.update();
-        resetButton.update();
-
         short orderData = serialReceiver.tryGetOrder();
-
-        //if (orderData != 0) { orderQueue.add(new Order(orderData, orderTally++)); }
+        if (orderData != 0) { orderQueue.add(new Order(orderData, orderTally++)); }
 
         if (lastQueueLength != orderQueue.size()) {
             String queueString = gson.toJson(orderQueue);
@@ -166,7 +162,7 @@ public class SundaeMachine extends OpMode {
 
         if (!orderQueue.isEmpty()) {
             Queue<Order> queueCopy = new LinkedList<>(orderQueue);
-            panelsTelemetry.addLine("Now serving: " + orderQueue.poll().toString());
+            panelsTelemetry.addLine("Now serving: " + queueCopy.poll().toString());
             panelsTelemetry.addLine(" ");
             while (!queueCopy.isEmpty()) {
                 if (queueCopy.size() != 1) {
