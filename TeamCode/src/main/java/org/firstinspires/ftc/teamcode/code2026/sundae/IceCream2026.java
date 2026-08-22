@@ -42,10 +42,35 @@ public class IceCream2026 extends LinearOpMode {
     private double totalMoney;
     int orderCount;
     TelemetryManager panelsTelemetry;
-
+    private LinearOpMode mainOpMode;
     private short receivedOrder;
+    public class OrderThread extends Thread{
+        public void run(){
+            while(mainOpMode.opModeIsActive()){
+                if(receivedOrder == 0){
+                    receivedOrder = serialReceiver.tryGetOrder();
+                }
+                else{
+                    Order order = new Order(receivedOrder);
+                    List<Integer> incomingToppings = new ArrayList<>(order.toppings);
+                    orderCount++;
+                    ReadableOrderReturn parsedOrder = new ReadableOrderReturn(order.flavor, incomingToppings, orderCount, hardwareMap, mainOpMode);
+                    receivedOrder = 0;
+                    orders.add(parsedOrder);
+                    savableOrders.add(order);
+                    OrderCollection collection = new OrderCollection();
+                    collection.orders = new ArrayList<>(savableOrders);
+                    collection.orderAmount=orderCount;
+                    collection.money = totalMoney;
+                    saveManager.Clear();
+                    saveManager.Save(collection);
+                }
+            }
+        }
+    }
     @Override
     public void runOpMode() {
+        mainOpMode = this;
         debounceTimer.reset();
         driveMotor = hardwareMap.get(DcMotorEx.class, "conveyorMotor");
         panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
@@ -73,6 +98,9 @@ public class IceCream2026 extends LinearOpMode {
             panelsTelemetry.addLine("Unable to restore backup: no backup");
         }
         waitForStart();
+        OrderThread thread = new OrderThread();
+        thread.start();
+
         serialReceiver = new SerialReceiver(this, false);
         for (int i = 0; i < operatorButtons.length && opModeIsActive(); i++) {
             operatorButtons[i] = hardwareMap.get(DigitalChannel.class, operatorButtonNames[i]);
@@ -99,25 +127,7 @@ public class IceCream2026 extends LinearOpMode {
         while (opModeIsActive()) {
             panelsTelemetry.addData("Status", status.toString());
             panelsTelemetry.addLine("Total money earned : $" + totalMoney + "0");
-            if(receivedOrder == 0){
-                receivedOrder = serialReceiver.tryGetOrder();
-            }
-            else{
 
-                Order order = new Order(receivedOrder);
-                List<Integer> incomingToppings = new ArrayList<>(order.toppings);
-                orderCount++;
-                ReadableOrderReturn parsedOrder = new ReadableOrderReturn(order.flavor, incomingToppings, orderCount, hardwareMap, this);
-                receivedOrder = 0;
-                orders.add(parsedOrder);
-                savableOrders.add(order);
-                OrderCollection collection = new OrderCollection();
-                collection.orders = new ArrayList<>(savableOrders);
-                collection.orderAmount=orderCount;
-                collection.money = totalMoney;
-                saveManager.Clear();
-                saveManager.Save(collection);
-            }
             if(orders != null){
                 List<ReadableOrderReturn> orderList = new ArrayList<>(orders);
                 if(!orders.isEmpty()){
@@ -289,8 +299,6 @@ public class IceCream2026 extends LinearOpMode {
                     status = IceCreamStatus.Dispensing;
                     driveMotor.setPower(0);
                     cream.Dispense(600);
-
-
             }
         }
         //driveMotor.setTargetPosition(13780);
