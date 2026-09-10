@@ -20,13 +20,14 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 
 @TeleOp
 public class IceCream2026 extends LinearOpMode {
 
-    public Queue<ReadableOrderReturn> orders;
-    public Queue<Order> savableOrders;
+    public Queue<ReadableOrderReturn> orders = new ConcurrentLinkedQueue<>();
+    public Queue<Order> savableOrders = new ConcurrentLinkedQueue<>();
     public DcMotorEx driveMotor;
     private final DigitalChannel[] operatorButtons = new DigitalChannel[3];
     private final DigitalChannel[] operatorLEDs = new DigitalChannel[3];
@@ -49,14 +50,18 @@ public class IceCream2026 extends LinearOpMode {
             while(mainOpMode.opModeIsActive()){
                 if(receivedOrder == 0){
                     receivedOrder = serialReceiver.tryGetOrder();
+                    if(receivedOrder == 0) {
+                        try {
+                            Thread.sleep(10);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                    }
                 }
                 else{
                     Order order = new Order(receivedOrder);
-                    List<Integer> incomingToppings = new ArrayList<>(order.toppings);
                     orderCount++;
-                    ReadableOrderReturn parsedOrder = new ReadableOrderReturn(order.flavor, incomingToppings, orderCount, hardwareMap, mainOpMode);
                     receivedOrder = 0;
-                    orders.add(parsedOrder);
                     savableOrders.add(order);
                     OrderCollection collection = new OrderCollection();
                     collection.orders = new ArrayList<>(savableOrders);
@@ -76,13 +81,10 @@ public class IceCream2026 extends LinearOpMode {
         panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
         saveManager = new SaveManager();
         OrderCollection orderCollection = saveManager.Read();
-        orders = new LinkedList<>();
-        savableOrders = new LinkedList<>();
         if(orderCollection.successful){
             if(orderCollection.orders != null){
-
                 for(int i = 0; i < orderCollection.orders.size(); i++){
-                    orders.add(new ReadableOrderReturn(orderCollection.orders.get(i).flavor, new ArrayList<>(orderCollection.orders.get(i).toppings), (orderCollection.orderAmount - orderCollection.orders.size()) + i + 1, hardwareMap, this));
+                   orders.add(new ReadableOrderReturn(orderCollection.orders.get(i).flavor, new ArrayList<>(orderCollection.orders.get(i).toppings), (orderCollection.orderAmount - orderCollection.orders.size()) + i + 1, hardwareMap, this));
                 }
                 savableOrders.addAll( orderCollection.orders);
                 orderCount = orderCollection.orderAmount;
@@ -98,8 +100,7 @@ public class IceCream2026 extends LinearOpMode {
             panelsTelemetry.addLine("Unable to restore backup: no backup");
         }
         waitForStart();
-        OrderThread thread = new OrderThread();
-        thread.start();
+
 
         serialReceiver = new SerialReceiver(this, false);
         for (int i = 0; i < operatorButtons.length && opModeIsActive(); i++) {
@@ -124,7 +125,14 @@ public class IceCream2026 extends LinearOpMode {
         driveMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         driveMotor.setPower(-1);
         resetDoubleClick.reset();
+        OrderThread thread = new OrderThread();
+        thread.start();
         while (opModeIsActive()) {
+            if(savableOrders.size() > orders.size() && !savableOrders.isEmpty()){
+                List<Integer> incomingToppings = new ArrayList<>(savableOrders.peek().toppings);
+                ReadableOrderReturn parsedOrder = new ReadableOrderReturn(savableOrders.peek().flavor, incomingToppings, orderCount, hardwareMap, mainOpMode);
+                orders.add(parsedOrder);
+            }
             panelsTelemetry.addData("Status", status.toString());
             panelsTelemetry.addLine("Total money earned : $" + totalMoney + "0");
 
